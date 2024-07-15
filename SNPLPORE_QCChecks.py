@@ -21,6 +21,8 @@ import session_info
 import traceback
 from datetime import datetime
 
+import QC_Checks as qc
+
 # SNPL PORE Backend Database
 inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE'
 # SNPL PORE FrontEnd Database
@@ -42,36 +44,33 @@ def main():
         # Set option in pandas to not allow chaining (views) of dataframes, instead force copy to be performed.
         pd.options.mode.copy_on_write = True
 
+        # Create the data management instance to  be used to define the logfile path and other general DM attributes
+        dmInstance = dm.generalDMClass(logFile)
+
         ################
         # Define the Quality Control Procedures to be processed.
         ################
 
         inQuery = "Select * FROM tbl_QCQueries"
-        outFun = connect_to_AcessDB(inQuery, inDBBE)
-        if outFun[0].lower() != "success function":
-            messageTime = timeFun()
-            print("WARNING - Function connect_to_AcessDB - NAWMADataset" + messageTime + " - Failed - Exiting Script")
-            exit()
-
-        messageTime = timeFun()
-        print(f'Success: connect_to_AcessDB - tbl_QCQueries - {messageTime}')
-        outDFQueries = outFun[1]
+        outDFQueries = dm.connect_to_AcessDB_DF(inQuery, inDBBE)
 
         # Iterate through the QC Queries defined in 'tbl_QCQueries'
         for index, row in outDFQueries.iterrows():
-            qcQuery_LU = row.get('QueryName')
+            queryName_LU = row.get('QueryName')
 
-            ####################
-            #
-            ####################
 
-            if qcQuery_LU = 'outFun = connect_to_AcessDB(inQuery, inDBBE)':
+            #Create the qcChecks instance
+            qcCheckInst = qc.qcChecks(queryName_LU)
+
+            # Print out the name space of the instance
+            print(qcCheckInst.__dict__)
+
 
 
 
 
             messageTime = timeFun()
-            scriptMsg = 'Successfully Completed QC Query: ' + qcQuery_LU + ' - '+ messageTime
+            scriptMsg = 'Successfully Completed QC Query: ' + queryName_LU + ' - '+ messageTime
 
             print(scriptMsg)
             logFile = open(logFileName, "a")
@@ -91,22 +90,6 @@ def main():
 
     finally:
         exit()
-
-
-
-# Connect to Access DB and perform defined query - return query in a dataframe
-def connect_to_AcessDB(query, inDB):
-    try:
-        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
-        cnxn = pyodbc.connect(connStr)
-        queryDf = pd.read_sql(query, cnxn)
-        cnxn.close()
-
-        return "success function", queryDf
-    except:
-        print(f'Failed - connect_to_AccessDB')
-        exit()
-
 
 def timeFun():
     try:

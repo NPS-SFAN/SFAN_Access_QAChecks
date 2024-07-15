@@ -21,8 +21,10 @@ import session_info
 import traceback
 from datetime import datetime
 
-# SNPL PORE Database
-inDB = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\PlantCommunities\Data\Database\SFAN_PlantCommunities_BE_20240306.accdb'
+# SNPL PORE Backend Database
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE'
+# SNPL PORE FrontEnd Database
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\'
 
 #Year Being Processed
 inYear = 2024
@@ -45,7 +47,7 @@ def main():
         ################
 
         inQuery = "Select * FROM tbl_QCQueries"
-        outFun = connect_to_AcessDB(inQuery, inDB)
+        outFun = connect_to_AcessDB(inQuery, inDBBE)
         if outFun[0].lower() != "success function":
             messageTime = timeFun()
             print("WARNING - Function connect_to_AcessDB - NAWMADataset" + messageTime + " - Failed - Exiting Script")
@@ -62,6 +64,9 @@ def main():
             ####################
             #
             ####################
+
+            if qcQuery_LU = 'outFun = connect_to_AcessDB(inQuery, inDBBE)':
+
 
 
 

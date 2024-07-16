@@ -117,5 +117,5 @@ class qcChecks:
         print ('Add new query method here')
 
 
-        # Close the connection
-
+        # Push the new query - STOPPED here 7/16/2024
+        dm.generalDMClass.PushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)

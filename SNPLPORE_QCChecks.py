@@ -4,7 +4,8 @@ Root Quality Control Checks Script - setup script.
 
 Output:
 
-Python Environment: SNPL_QC - Python 3.11
+Python Environment: SNPL_QC - Python 3.11,
+pywin32
 
 Date Developed - July 2024
 Created By - Kirk Sherrill - Data Scientist/Manager San Francisco Bay Area Network Inventory and Monitoring
@@ -22,6 +23,7 @@ import QC_Checks as qc
 import generalDM as dm
 
 
+
 # Protocol Being Processes
 protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
 # Access Backend Database for the protocol
@@ -29,7 +31,7 @@ inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\S
 # Access FrontEnd Database for the protocol
 inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240716v2.accdb'
 # Year Being Processed
-inYear = 2024
+inYear = 2023
 
 #dateNow = datetime.now().strftime('%Y%m%d')
 # Output Name, OutDir, Workspace and Logfile Name
@@ -64,7 +66,7 @@ def main():
         # Proceed to the Workflow to process the defined data validation routines
         ################
 
-        # Go to Logger File Processing Routine
+        # Go to QC Processing Routines
         qc.qcChecks.process_QCRequest(qcCheckInstance=qcCheckInstance, dmInstance=dmInstance)
 
         # Message Script Completed

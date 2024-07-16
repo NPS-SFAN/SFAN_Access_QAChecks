@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 import pyodbc
 import pandas as pd
+import win32com.client
 
 class generalDMClass:
 
@@ -100,11 +101,9 @@ class generalDMClass:
         :return: cnxn: ODBC connection to access database
         """
 
-        inDB = self.dbPathName
+        inDB = self.inDBBE
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
         cnxn = pyodbc.connect(connStr)
-        #queryDf = pd.read_sql(query, cnxn)
-        #cnxn.close()
         return cnxn
 
     def getLookUpValueAccess(self, cnxn, lookupTable, lookupField, lookupValue, lookupFieldValueFrom):
@@ -163,3 +162,47 @@ class generalDMClass:
         except:
             print(f'Failed - connect_to_AccessDB_DF')
             exit()
+
+
+    def QueryExistsDelete(queryName, inDBPath):
+        """
+        Check if query exists in the database if yes delete, using pywin32 to hit the Access COM interface, ODBC
+        doesn't have permissions to hit the 'MSYS' variables
+
+        :param queryName: Name of query being pushed, will deleted first if exists
+        :param inDBPath: path to database
+
+        :return:
+        """
+        # Initialize the Access application
+        access_app = win32com.client.Dispatch('Access.Application')
+
+        # Open the Access database
+        access_app.OpenCurrentDatabase(inDBPath)
+
+        # Get the current database object
+        db = access_app.CurrentDb()
+
+        try:
+            # Check if the query exists before attempting to delete it
+            query_exists = False
+            for query in db.QueryDefs:
+                if query.Name == queryName:
+                    query_exists = True
+                    break
+
+            if query_exists:
+                # Delete the query
+                db.QueryDefs.Delete(queryName)
+                print(f"Query '{queryName}' has been deleted from the database.")
+            else:
+                print(f"Query '{queryName}' does not exist in the database.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            # Close the database and quit Access
+            access_app.CloseCurrentDatabase()
+            access_app.Quit()
+
+        # Clean up COM objects
+        del access_app

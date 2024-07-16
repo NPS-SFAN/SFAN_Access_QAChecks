@@ -24,11 +24,12 @@ class generalDMClass:
 
     def createLogFile(logFilePrefix, workspaceParent):
         """
-        Creates a .txt logfile for the defined Name and in the defined Workspace directory. Checks is workspace exists
+        Creates a .txt logfile for the defined Name and in the defined Workspace directory. Checks if workspace exists
         will create if not.
 
-        :param logFilePrefix:  LogFile Prefix
-        :param workspaceParent: Parent directory for the workspace, will add a child 'workspace' in which the logfile will be created
+        :param logFilePrefix:  LogFile Prefix Name
+        :param workspaceParent: Parent directory for the workspace, will add a child 'workspace' in which the logfile
+         will be created
         :return: logFile: Full Path Name of the created logfile
         """
 

@@ -4,27 +4,30 @@ QC_Checks Methods/Functions to be used for general Quality Control Validation wo
 """
 #Import Required Dependices
 import pandas as pd
-import glob
-
-import os
-import sys
+import glob, os, sys
+import generalDM as dm
 
 class qcChecks:
 
     #Class Variables
     numqcChecksInstances = 0
 
-    def __init__(self, queryName):
+    def __init__(self, protocol, inDBBE, inDBFE):
         """
         Define the instantiated loggerFile attributes
 
-        :param queryName: Name of QC routine being processes  (e.g. 'qa_a102_Unverified_Events'|'qa_f112_Incomplete_Weather').
+        :param protocol: Name of the Protocol being processes
+        :param inDBBE: Protocol Backend Access database full path
+        :param inDBFE: Protocol Frontend Access database full path
 
 
         :return: instantiated self object
         """
 
-        self.queryName = queryName
+        self.protocol = protocol
+        self.inDBBE = inDBBE
+        self.inDBFE = inDBFE
+
 
         #Update the Class Variable
         qcChecks.numqcChecksInstances += 1
@@ -33,8 +36,7 @@ class qcChecks:
 
         """
         General Quality Control workflow processing workflow steps.
-        Extracting needed information from the instantiated QC Check class
-        Output Logfile will be in the self.fileDir\workspace directory
+        Workflow will iterate throug the queries by protocol defined in the 'tbl_QCQuries' table
 
         :param qcCheckInstance: QC Check Instance
         :param dmInstance: data management instance which will have the logfile name
@@ -42,3 +44,38 @@ class qcChecks:
         :return:
         """
 
+        outDFQueries = qcChecks.define_QCQueries(qcCheckInstance)
+
+        # Iterate through the QC Queries defined in 'tbl_QCQueries' via outDFQueries
+        for index, row in outDFQueries.iterrows():
+            queryName_LU = row.get('QueryName')
+
+            # Create the qcChecks instance
+            qcCheckInst = qc.qcChecks(queryName_LU)
+
+            # Print out the name space of the instance
+            print(qcCheckInst.__dict__)
+
+            messageTime = timeFun()
+            scriptMsg = 'Successfully Completed QC Query: ' + queryName_LU + ' - ' + messageTime
+
+            print(scriptMsg)
+            logFile = open(logFileName, "a")
+            logFile.write(scriptMsg + "\n")
+            logFile.close()
+
+    def define_QCQueries(qcCheckInstance):
+        """
+        Define the QC Queries to be processed pulling from the 'tbl_QCQueries' table
+
+        :param qcCheckInstance: QC Check Instance
+
+        :return:outDFQueries: dataframe with the 'tbl_QCQueries' table (i.e. queries to be processed
+        """
+        # Define Protocol Specific QC Queries
+        inQuery = "Select * FROM tbl_QCQueries"
+
+        inDBBE = qcCheckInstance.inDBBE
+        outDFQueries = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, inDBBE)
+
+        return outDFQueries

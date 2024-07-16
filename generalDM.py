@@ -206,3 +206,22 @@ class generalDMClass:
 
         # Clean up COM objects
         del access_app
+
+    def PushQuery(inQuerySel, queryName, inDBPath):
+        """
+        Push the pass query in 'inQuerySel' to the output query 'queryName'
+
+        :param inQuerySel: SQL Query defining the query to be pushed back to the backend instance
+        :param queryName: Name of query being pushed, will deleted first if exists
+        :param inDBPath: path to database
+
+        :return:
+        """
+        # Initialize the Access application
+        access_app = win32com.client.Dispatch('Access.Application')
+
+        # Open the Access database
+        access_app.OpenCurrentDatabase(inDBPath)
+
+        # Get the current database object
+        db = access_app.CurrentDb()

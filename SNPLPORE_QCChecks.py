@@ -1,6 +1,6 @@
 """
-SNPLPORE_QCChecks.py
-Script performs the Snowy Plover Quality Control Data Validation checks.
+QCChecksRoot.py
+Root Quality Control Checks Script - setup script.
 
 Output:
 
@@ -20,23 +20,25 @@ import os
 import session_info
 import traceback
 from datetime import datetime
-
 import QC_Checks as qc
+import generalDM as dm
 
-# SNPL PORE Backend Database
-inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE'
-# SNPL PORE FrontEnd Database
-inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\'
 
-#Year Being Processed
+# Protocol Being Processes
+protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
+# Access Backend Database for the protocol
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240716 - Copy.accdb'
+# Access FrontEnd Database for the protocol
+inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240716v2.accdb'
+# Year Being Processed
 inYear = 2024
 
-dateNow = datetime.now().strftime('%Y%m%d')
+#dateNow = datetime.now().strftime('%Y%m%d')
 # Output Name, OutDir, Workspace and Logfile Name
-outName = f'SNPLPORE_QC_'str{inYear}f'_{dateNow}'  # Output name for excel file and logile
+outName = f'{protocol}_{inYear}'  # Output name for excel file and logile
 outDir = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Deliverable\2024'  # Directory Output Location
-workspace = f'{outDir}\\workspace'  # Workspace Output Directory
-logFileName = f'{workspace}\\{outName}_{dateNow}.LogFile.txt'  # Name of the .txt script logfile which is saved in the workspace directory
+#workspace = f'{outDir}\\workspace'  # Workspace Output Directory
+#logFileName = f'{workspace}\\{outName}.LogFile.txt'  # Name of the .txt script logfile which is saved in the workspace directory
 
 def main():
     try:
@@ -44,43 +46,34 @@ def main():
         # Set option in pandas to not allow chaining (views) of dataframes, instead force copy to be performed.
         pd.options.mode.copy_on_write = True
 
+        ###############
+        # Define the qcCheckInstance and dmInstance instances
+        ################
+
+        # Create the qcChecks instance
+        qcCheckInstance = qc.qcChecks(protocol=protocol, inDBBE=inDBBE, inDBFE=inDBFE)
+
+        # Logfile will be saved in the workspace directory which is child of the fileDir
+        logFile = dm.generalDMClass.createLogFile(logFilePrefix=outName, workspaceParent=outDir)
+
         # Create the data management instance to  be used to define the logfile path and other general DM attributes
         dmInstance = dm.generalDMClass(logFile)
 
+        ###############
+        # Proceed to the Workflow to process the defined data validation routines
         ################
-        # Define the Quality Control Procedures to be processed.
-        ################
 
-        inQuery = "Select * FROM tbl_QCQueries"
-        outDFQueries = dm.connect_to_AcessDB_DF(inQuery, inDBBE)
+        # Go to Logger File Processing Routine
+        qc.qcChecks.process_QCRequest(qcCheckInstance=qcCheckInstance, dmInstance=dmInstance)
 
-        # Iterate through the QC Queries defined in 'tbl_QCQueries'
-        for index, row in outDFQueries.iterrows():
-            queryName_LU = row.get('QueryName')
-
-
-            #Create the qcChecks instance
-            qcCheckInst = qc.qcChecks(queryName_LU)
-
-            # Print out the name space of the instance
-            print(qcCheckInst.__dict__)
-
-
-
-
-
-            messageTime = timeFun()
-            scriptMsg = 'Successfully Completed QC Query: ' + queryName_LU + ' - '+ messageTime
-
-            print(scriptMsg)
-            logFile = open(logFileName, "a")
-            logFile.write(scriptMsg + "\n")
-            logFile.close()
+        # Message Script Completed
+        logMsg = f'Successfully Finished QC Check Script for - {protocol}'
+        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
 
 
     except:
         messageTime = timeFun()
-        scriptMsg = "Exiting Error - SNPLPORE_QCChecks.py - " + messageTime
+        scriptMsg = "Exiting Error - QCChecks.py - " + messageTime
         print(scriptMsg)
         logFile = open(logFileName, "a")
         logFile.write(scriptMsg + "\n")
@@ -111,17 +104,6 @@ if __name__ == '__main__':
     else:
         os.makedirs(outDir)
 
-    if os.path.exists(workspace):
-        pass
-    else:
-        os.makedirs(workspace)
-
-    # Check if logFile exists
-    if os.path.exists(logFileName):
-        pass
-    else:
-        logFile = open(logFileName, "w")  # Creating index file if it doesn't exist
-        logFile.close()
 
     # Run Main Code Bloc
     main()

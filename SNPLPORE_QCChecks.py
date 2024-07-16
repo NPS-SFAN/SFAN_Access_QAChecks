@@ -4,8 +4,6 @@ Root Quality Control Checks Script - setup script.
 
 Output:
 
-
-
 Python Environment: SNPL_QC - Python 3.11
 
 Date Developed - July 2024
@@ -51,7 +49,10 @@ def main():
         ################
 
         # Create the qcChecks instance
-        qcCheckInstance = qc.qcChecks(protocol=protocol, inDBBE=inDBBE, inDBFE=inDBFE)
+        qcCheckInstance = qc.qcChecks(protocol=protocol, inDBBE=inDBBE, inDBFE=inDBFE, yearLU= inYear)
+
+        # Print out the name space of the instance
+        print(qcCheckInstance.__dict__)
 
         # Logfile will be saved in the workspace directory which is child of the fileDir
         logFile = dm.generalDMClass.createLogFile(logFilePrefix=outName, workspaceParent=outDir)

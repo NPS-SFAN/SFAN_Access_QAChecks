@@ -51,7 +51,7 @@ class qcChecks:
         # Iterate through the QC Queries defined in 'tbl_QCQueries' via outDFQueries
         for index, row in outDFQueries.iterrows():
             queryName_LU = row.get('QueryName')
-
+            queryDecrip_LU = row.get('QueryDescription')
             if qcCheckInstance.protocol.lower() == 'snplpore':
 
                 # Create the data management instance to  be used to define the logfile path and other general DM attributes
@@ -64,10 +64,10 @@ class qcChecks:
 
                 filterQueryName = qcProtocolInstance.filterRecQuery
                 #Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
-                outNewRecQuery = qcChecks.pushQueryToDB(inQuerySel, filterQueryName, qcCheckInstance)
+                qcChecks.pushQueryToDB(inQuerySel, filterQueryName, qcCheckInstance, dmInstance)
 
                 #Process each QC Routine
-                processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, yearlyRecDF, qcCheckInstance, dmInstance)
+                processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance)
 
             elif qcCheckInstance.protocol.lower() == 'salmonids': #To Be Developed 7/16/2024
                 print('Test')
@@ -98,24 +98,25 @@ class qcChecks:
 
         return outDFQueries
 
-    def pushQueryToDB(inQuerySel, queryName, qcCheckInstance):
+    def pushQueryToDB(inQuerySel, queryName, qcCheckInstance,dmInstance):
         """
         Push the passed SQL Query to the defined output query
 
         :param inQuerySel: SQL Query defining the query to be pushed back to the backend instance
         :param queryName: Name of query being pushed, will deleted first if exists
         :param qcCheckInstance: QC Check Instance (has Database paths, etc
-
+        :param dmInstance: Data Management Instance
 
         :return existsLU: String defining if query exists ('Yes') or not ('No')
         """
 
         #Check if query exists first - if yes delete
-        dm.generalDMClass.QueryExistsDelete(queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
+        dm.generalDMClass.queryExistsDelete(queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
-        # Create the query
-        print ('Add new query method here')
+        # Push the new query
+        dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
+
+        logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'
+        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
 
 
-        # Push the new query - STOPPED here 7/16/2024
-        dm.generalDMClass.PushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)

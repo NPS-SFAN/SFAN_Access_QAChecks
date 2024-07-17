@@ -164,7 +164,7 @@ class generalDMClass:
             exit()
 
 
-    def QueryExistsDelete(queryName, inDBPath):
+    def queryExistsDelete(queryName, inDBPath):
         """
         Check if query exists in the database if yes delete, using pywin32 to hit the Access COM interface, ODBC
         doesn't have permissions to hit the 'MSYS' variables
@@ -207,9 +207,9 @@ class generalDMClass:
         # Clean up COM objects
         del access_app
 
-    def PushQuery(inQuerySel, queryName, inDBPath):
+    def pushQuery(inQuerySel, queryName, inDBPath):
         """
-        Push the pass query in 'inQuerySel' to the output query 'queryName'
+        Push SQL query defined in 'inQuerySel' to the output query 'queryName'
 
         :param inQuerySel: SQL Query defining the query to be pushed back to the backend instance
         :param queryName: Name of query being pushed, will deleted first if exists
@@ -225,3 +225,58 @@ class generalDMClass:
 
         # Get the current database object
         db = access_app.CurrentDb()
+
+        try:
+            # Create the new query
+            new_query = db.CreateQueryDef(queryName, inQuerySel)
+            print(f"Query '{queryName}' has been created in the database.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            # Close the database and quit Access
+            access_app.CloseCurrentDatabase()
+            access_app.Quit()
+
+        # Clean up COM objects
+        del access_app
+
+
+    def queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance):
+        """
+        Add the query description to the passed query
+
+        :param queryName_LU: Name of query being pushed, will deleted first if exists
+        :param queryDesc: Query description to be added to the query
+        :param qcCheckInstance: QC Check Instance (has Database paths, will used to define the front end query with
+        the existing query.
+
+        :return
+        """
+
+        # Initialize the Access application
+        access_app = win32com.client.Dispatch('Access.Application')
+
+        inDBPath = qcCheckInstance.inDBFE
+        # Open the Access database
+        access_app.OpenCurrentDatabase(inDBPath)
+
+        # Get the current database object
+        db = access_app.CurrentDb()
+
+        # Get the query definition
+        query_def = db.QueryDefs(queryName_LU)
+
+        # Add the description property if it doesn't exist, or update it if it does
+        try:
+            query_def.Properties("Description").Value = queryDecrip_LU
+        except Exception as e:
+            # If the property does not exist, create it
+            new_prop = query_def.CreateProperty("Description", 10, queryDecrip_LU)  # 10 is the constant for dbText
+            query_def.Properties.Append(new_prop)
+
+        # Clean up and close the database
+        access_app.CloseCurrentDatabase()
+        access_app.Quit()
+
+        # Clean up COM objects
+        del access_app

@@ -120,3 +120,30 @@ class qcChecks:
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
 
 
+    def updateQAResultsTable(queryName, qcCheckInstance,dmInstance):
+        """
+        IN DEVELOPEMENT - 7/17/2024
+        Perform append or update query to table 'tbl_QA_Results' which resides in the SFAN Backend Databases
+
+        :param queryName: Name of query being pushed, will deleted first if exists
+        :param qcCheckInstance: QC Check Instance (has Database paths, etc
+        :param dmInstance: Data Management Instance
+
+        :return
+        """
+        from datetime import datetime
+        b = datetime.now()
+        '''
+        strSQL = (f"INSERT INTO tbl_QA_Results ( Query_Name, Time_Frame, Query_Type, Query_Result,"
+                  f" Query_Run_Time, Query_Description, Query_Expression, Remedy_Desc, Remedy_Date, QA_User,"
+                  f" Is_Done, Data_Scope SELECT queryName, qcCheckInstance.yearLU,"
+                  f" tbl_QA_Results.Query_Type, tbl_QA_Results.Query_Result, tbl_QA_Results.Query_Run_Time, 
+                  f" tbl_QA_Results.Query_Description, tbl_QA_Results.Query_Expression, tbl_QA_Results.Remedy_Desc,
+                  f" tbl_QA_Results.Remedy_Date, tbl_QA_Results.QA_User, tbl_QA_Results.Is_Done,
+                  f" tbl_QA_Results.Data_Scope FROM tbl_QA_Results;")
+        '''
+
+
+
+        logMsg = f'Successfully pushed QC Check - {queryName} - to table tbl_QA_Results - in BE Database - {qcCheckInstance.inDBBE}'
+        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)

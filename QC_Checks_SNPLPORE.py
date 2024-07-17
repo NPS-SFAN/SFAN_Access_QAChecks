@@ -7,7 +7,7 @@ QC_Checks Methods/Functions to be used for Snowy Plover PORE Quality Control Val
 import pandas as pd
 import glob, os, sys
 
-import QC_Checks
+import QC_Checks as qc
 import generalDM as dm
 
 
@@ -55,12 +55,13 @@ class qcProtcol_SNPLPORE:
 
         return yearlyRecDF, inQuery
 
-    def processQuery(queryName_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+    def processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
         Iterate through the defined queries
 
         :param queryName_LU: Name of query routine being processes this is query name in the 'Query_Name' field in
          table 'tbl_QCQueries'
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
         :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
         :param qcCheckInstance: QC Check Instance
         :param dmInstance: data management instance which will have the logfile name
@@ -68,26 +69,53 @@ class qcProtcol_SNPLPORE:
 
         :return: Pushed
         """
+        try:
+            if queryName_LU == "qa_a102_Unverified_Events":
 
-        if queryName_LU == "qa_a102_Unverified_Events":
+                outMethod = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance)
 
-            outMethod = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, yearlyRecDF, qcCheckInstance, dmInstance)
-
-
-
-
-        def qa_a102_Unverified_Events(queryName_LU, yearlyRecDF, qcCheckInstance, dmInstance):
-            """
-            Query routine for validation check - qa_a102_Unverified_Events
-
-            :param queryName_LU: Name of query routine being processes this is query name in the 'Query_Name' field in
-             table 'tbl_QCQueries'
-            :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
-            :param qcCheckInstance: QC Check Instance
-            :param dmInstance: data management instance which will have the logfile name
+            else:
+                logMsg = f'Query - {queryName_LU} - is not defined - existing script'
+                dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+                exit()
 
 
-            :return: Pushed
-            """
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        finally:
+            return f'Success - processQuery - {queryName_LU}'
+
+
+    def qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_a102_Unverified_Events
+
+        :param queryName_LU: Name of query routine being processes this is query name in the 'Query_Name' field in
+         table 'tbl_QCQueries'
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: Pushed
+        """
+
+        #Single Query Check
+        queryName_LU = 'qa_a102_Unverified_Events_PY'
+
+        inQuerySel = f"""SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name, qsel_QA_Control.QCFlag, qsel_QA_Control.QCNotes, tlu_Data_Processing_Level.Label AS DataProcessingLevel, "frm_Data_Entry" AS varObject, "[Event_ID] = '" & [tbl_Events].[Event_ID] & "'" AS VarFilter, "" AS varSubObject, "" AS varSubFilter FROM qsel_QA_Control LEFT JOIN tlu_Data_Processing_Level ON qsel_QA_Control.DataProcessingLevelID = tlu_Data_Processing_Level.DataProcessingLevelID WHERE (((qsel_QA_Control.DataProcessingLevelID)<2 Or (qsel_QA_Control.DataProcessingLevelID) Is Null)) ORDER BY qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name;"""
+
+        #####################################################################
+        # Below are needed for all queries - Push Query, Updated Description, Append/Update to tbl_QA_Results
+        #####################################################################
+
+        # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
+        qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
+
+        # Define the description for the created query
+        dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
+
+        #Push values in 'queryName_LU' to the tbl_QA_Results Table
 
 

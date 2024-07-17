@@ -22,14 +22,12 @@ from datetime import datetime
 import QC_Checks as qc
 import generalDM as dm
 
-
-
 # Protocol Being Processes
 protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
 # Access Backend Database for the protocol
-inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240716 - Copy.accdb'
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240717 - Copy.accdb'
 # Access FrontEnd Database for the protocol
-inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240716v2.accdb'
+inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240717.accdb'
 # Year Being Processed
 inYear = 2023
 
@@ -70,7 +68,7 @@ def main():
         qc.qcChecks.process_QCRequest(qcCheckInstance=qcCheckInstance, dmInstance=dmInstance)
 
         # Message Script Completed
-        logMsg = f'Successfully Finished QC Check Script for - {protocol}'
+        logMsg = f'Successfully Finished All QC Check Script for - {protocol}'
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
 
 

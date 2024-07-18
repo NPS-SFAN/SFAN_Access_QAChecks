@@ -150,7 +150,6 @@ class generalDMClass:
 
         :return: queryDf: query output dataframe
         """
-
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
         cnxn = pyodbc.connect(connStr)
 
@@ -163,6 +162,26 @@ class generalDMClass:
         finally:
             cnxn.close()
             return queryDf
+
+    def queryExistsDeleteODBC(queryName, inDBPath):
+        """
+        Check if query exists in the database MSysObjects table.  Must have Admin permissions to read 'MSys tables
+
+        :param queryName: Name of query being pushed, will deleted first if exists
+        :param inDBPath: path to database
+
+        :return: query_exists: Variable defines if query exists on not (True|False)
+        """
+        inQuery = f"Select * FROM MSysObjects WHERE [Name] = '{queryName}';"
+
+        outDFQueries = generalDMClass.connect_to_AcessDB_DF(inQuery, inDBPath)
+
+        if len(queryName)> 0:
+            query_exists = True
+        else:
+            query_exists = False
+
+        return query_exists
 
 
     def queryExistsDelete(queryName, inDBPath):

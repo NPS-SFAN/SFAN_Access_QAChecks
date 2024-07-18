@@ -120,30 +120,58 @@ class qcChecks:
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
 
 
-    def updateQAResultsTable(queryName, qcCheckInstance,dmInstance):
+    def updateQAResultsTable(queryName, queryDecrip_LU, qcCheckInstance,dmInstance):
         """
-        IN DEVELOPEMENT - 7/17/2024
-        Perform append or update query to table 'tbl_QA_Results' which resides in the SFAN Backend Databases
-
+        Perform append or update query to table 'tbl_QA_Results' which resides in the SFAN Backend Databases.
+        Checking queryName with '_PY" suffix added - will remove once done with development.
         :param queryName: Name of query being pushed, will deleted first if exists
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
         :param qcCheckInstance: QC Check Instance (has Database paths, etc
         :param dmInstance: Data Management Instance
 
         :return
         """
+
+        #Read query into a dataframe allowing for creation of the dataframe to append or update
+        inQuery = f'Select * FROM {queryName}'
+        outDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+
+        #Create the Summary of the output Query to be pushed to 'tbl_QA_Results' - below are fields in the
+        # 'tbl_QA_Results' table
+
+        Query_Name = queryName
+        Time_Frame = str(qcCheckInstance.yearLU)
+        Query_Type = queryName[6]
+        Query_Result = str(outDF.shape[0])
+
         from datetime import datetime
-        b = datetime.now()
-        '''
-        strSQL = (f"INSERT INTO tbl_QA_Results ( Query_Name, Time_Frame, Query_Type, Query_Result,"
-                  f" Query_Run_Time, Query_Description, Query_Expression, Remedy_Desc, Remedy_Date, QA_User,"
-                  f" Is_Done, Data_Scope SELECT queryName, qcCheckInstance.yearLU,"
-                  f" tbl_QA_Results.Query_Type, tbl_QA_Results.Query_Result, tbl_QA_Results.Query_Run_Time, 
-                  f" tbl_QA_Results.Query_Description, tbl_QA_Results.Query_Expression, tbl_QA_Results.Remedy_Desc,
-                  f" tbl_QA_Results.Remedy_Date, tbl_QA_Results.QA_User, tbl_QA_Results.Is_Done,
-                  f" tbl_QA_Results.Data_Scope FROM tbl_QA_Results;")
-        '''
+        now = datetime.now()
+        Query_Run_Time = now.strftime('%m/%d/%y %H:%M:%S')
+        Query_Description = queryDecrip_LU
+        Is_Done = 0
+        Data_Scope = 0
 
+        #Detemine if record for 'Query_Name' and 'Time_Frame' already exists. If yes - update, else append
+        # Read query into a dataframe allowing for creation of the dataframe to append or update
+        inQuery = f"""Select COUNT(*) AS RecCount FROM tbl_QA_Results WHERE [Query_Name] = '{queryName}_PY' AND [Time_Frame] ='{Time_Frame}'"""
+        outCountDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+        countValue = outCountDF['RecCount'][0]
 
+        if countValue >= 1:
+            type = 'Update'
+            #Update record in 'tbl_QA_Results'
+            inQuery = (f"UPDATE tbl_QA_Results SET tbl_QA_Results.Query_Type = {Query_Type}, tbl_QA_Results.Query_Result"
+            f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
+            f" = '{Query_Description}', tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
+            f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
 
-        logMsg = f'Successfully pushed QC Check - {queryName} - to table tbl_QA_Results - in BE Database - {qcCheckInstance.inDBBE}'
+        else: #Append Record to 'tbl_QA_Results'
+            type = 'Append'
+            inQuery = ""
+
+        #Push the Update or Append Query
+        dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
+
+        logMsg = (f'Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {cCheckInstance.inDBBE}'
+                  f' - {qcCheckInstance.inDBFE}')
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)

@@ -30,13 +30,13 @@ inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\S
 inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240718v2.accdb'
 # Year Being Processed
 inYear = 2023
+# NPS User Name of person running the QC script.  This will be populated in the 'QA_USer' field of the 'tbl_QA_Results
+inUser = 'ksherrill'
 
 #dateNow = datetime.now().strftime('%Y%m%d')
 # Output Name, OutDir, Workspace and Logfile Name
 outName = f'{protocol}_{inYear}'  # Output name for excel file and logile
 outDir = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Deliverable\2024'  # Directory Output Location
-#workspace = f'{outDir}\\workspace'  # Workspace Output Directory
-#logFileName = f'{workspace}\\{outName}.LogFile.txt'  # Name of the .txt script logfile which is saved in the workspace directory
 
 def main():
     try:
@@ -49,7 +49,7 @@ def main():
         ################
 
         # Create the qcChecks instance
-        qcCheckInstance = qc.qcChecks(protocol=protocol, inDBBE=inDBBE, inDBFE=inDBFE, yearLU= inYear)
+        qcCheckInstance = qc.qcChecks(protocol=protocol, inDBBE=inDBBE, inDBFE=inDBFE, yearLU= inYear, inUser = inUser)
 
         # Print out the name space of the instance
         print(qcCheckInstance.__dict__)
@@ -70,7 +70,6 @@ def main():
         # Message Script Completed
         logMsg = f'Successfully Finished All QC Check Script for - {protocol}'
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
-
 
     except:
         messageTime = timeFun()

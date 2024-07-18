@@ -92,16 +92,15 @@ class generalDMClass:
 
         return messageTime
 
-    def connect_DB_Access(self):
+    def connect_DB_Access(inDB):
         """
         Create connection to Access Database Via PYODBC connection.
 
-        :param instance: Will pull the full path name to the database from the passed instance
+        :param inDB: Full path and name to access database
 
         :return: cnxn: ODBC connection to access database
         """
 
-        inDB = self.inDBBE
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
         cnxn = pyodbc.connect(connStr)
         return cnxn
@@ -142,9 +141,9 @@ class generalDMClass:
         return lookupValueOut
 
     def connect_to_AcessDB_DF(query, inDB):
-    # Connect to Access DB and perform defined query - return query in a dataframe
+
         """
-        Connect to Access DB and perform defined query - return query in a dataframe
+        Connect to Access DB via PYODBC and perform defined query via pyodbc - return query in a dataframe
 
         :param query: query to be processed
         :param inDB: path to the access database being hit
@@ -152,16 +151,18 @@ class generalDMClass:
         :return: queryDf: query output dataframe
         """
 
-        try:
-            connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
-            cnxn = pyodbc.connect(connStr)
-            queryDf = pd.read_sql(query, cnxn)
-            cnxn.close()
+        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + inDB + ";")
+        cnxn = pyodbc.connect(connStr)
 
-            return queryDf
-        except:
-            print(f'Failed - connect_to_AccessDB_DF')
+        try:
+            queryDf = pd.read_sql(query, cnxn)
+        except Exception as e:
+            print(f"Error in 'connect_to_AccessDB_DF' for - {query} - {e}")
             exit()
+
+        finally:
+            cnxn.close()
+            return queryDf
 
 
     def queryExistsDelete(queryName, inDBPath):
@@ -240,6 +241,31 @@ class generalDMClass:
         # Clean up COM objects
         del access_app
 
+    def excuteQuery(inQuery, inDBBE):
+        """
+        Routine runs a defined SQL Query in the passed database, Query will be performing an 'Update', 'Append'
+        or 'Make Table'.  Query is not retained in the database only is executed.
+        Using PYODBC datbase connection
+
+        :param inQuery: SQL Query defining the query to be pushed back to the backend instance
+        :param inDBBE: Path to access backend database
+
+        :return:
+        """
+        #Connect via ODBC to Access Database
+        cnxn = generalDMClass.connect_DB_Access(inDBBE)
+
+        try:
+            # Create a cursor object
+            cursor = cnxn.cursor()
+            cursor.execute(inQuery)
+            cnxn.commit()
+
+        except Exception as e:
+            print(f"An error occurred in execute query {e}")
+        finally:
+            # Close the database and quit Access
+            cnxn.close()
 
     def queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance):
         """

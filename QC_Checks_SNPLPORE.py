@@ -72,13 +72,15 @@ class qcProtcol_SNPLPORE:
         try:
             if queryName_LU == "qa_a102_Unverified_Events":
 
-                outMethod = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance)
+                qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance)
 
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
                 exit()
 
+            #For all QC queries update the 'tbl_QA_Results
+            qc.qcChecks.updateQAResultsTable(queryName_LU, queryDecrip_LU, qcCheckInstance, dmInstance)
 
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -102,7 +104,7 @@ class qcProtcol_SNPLPORE:
         """
 
         #Single Query Check
-        queryName_LU = 'qa_a102_Unverified_Events_PY'
+        queryName_LU = 'qa_a102_Unverified_Events'
 
         inQuerySel = f"""SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name, qsel_QA_Control.QCFlag, qsel_QA_Control.QCNotes, tlu_Data_Processing_Level.Label AS DataProcessingLevel, "frm_Data_Entry" AS varObject, "[Event_ID] = '" & [tbl_Events].[Event_ID] & "'" AS VarFilter, "" AS varSubObject, "" AS varSubFilter FROM qsel_QA_Control LEFT JOIN tlu_Data_Processing_Level ON qsel_QA_Control.DataProcessingLevelID = tlu_Data_Processing_Level.DataProcessingLevelID WHERE (((qsel_QA_Control.DataProcessingLevelID)<2 Or (qsel_QA_Control.DataProcessingLevelID) Is Null)) ORDER BY qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name;"""
 
@@ -115,7 +117,3 @@ class qcProtcol_SNPLPORE:
 
         # Define the description for the created query
         dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
-
-        #Push values in 'queryName_LU' to the tbl_QA_Results Table
-
-

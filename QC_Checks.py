@@ -13,7 +13,7 @@ class qcChecks:
     #Class Variables
     numqcChecksInstances = 0
 
-    def __init__(self, protocol, inDBBE, inDBFE, yearLU):
+    def __init__(self, protocol, inDBBE, inDBFE, yearLU, inUser):
         """
         Define the instantiated loggerFile attributes
 
@@ -21,6 +21,7 @@ class qcChecks:
         :param inDBBE: Protocol Backend Access database full path
         :param inDBFE: Protocol Frontend Access database full path
         :param yearLU: Year being processed
+        :param inUser: NPS UserNam
 
         :return: instantiated self object
         """
@@ -29,6 +30,7 @@ class qcChecks:
         self.inDBBE = inDBBE
         self.inDBFE = inDBFE
         self.yearLU = yearLU
+        self.inUser = inUser
 
         #Update the Class Variable
         qcChecks.numqcChecksInstances += 1
@@ -148,30 +150,37 @@ class qcChecks:
         now = datetime.now()
         Query_Run_Time = now.strftime('%m/%d/%y %H:%M:%S')
         Query_Description = queryDecrip_LU
+        QA_User = qcCheckInstance.inUser
         Is_Done = 0
         Data_Scope = 0
 
-        #Detemine if record for 'Query_Name' and 'Time_Frame' already exists. If yes - update, else append
+        # Determine if record for 'Query_Name' and 'Time_Frame' already exists. If yes - update, else append
         # Read query into a dataframe allowing for creation of the dataframe to append or update
-        inQuery = f"""Select COUNT(*) AS RecCount FROM tbl_QA_Results WHERE [Query_Name] = '{queryName}_PY' AND [Time_Frame] ='{Time_Frame}'"""
+        inQuery = (f"Select COUNT(*) AS RecCount FROM tbl_QA_Results WHERE [Query_Name] = '{queryName}' AND" 
+                   f" [Time_Frame] ='{Time_Frame}'")
+
         outCountDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
         countValue = outCountDF['RecCount'][0]
 
-        if countValue >= 1:
+        if countValue >= 1:  # Already exists
             type = 'Update'
             #Update record in 'tbl_QA_Results'
             inQuery = (f"UPDATE tbl_QA_Results SET tbl_QA_Results.Query_Type = {Query_Type}, tbl_QA_Results.Query_Result"
-            f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
-            f" = '{Query_Description}', tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
-            f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
+                        f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
+                        f" = '{Query_Description}', tbl_QC_Results.QA_User = '{QA_User}',"
+                        f" tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
+                        f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
 
-        else: #Append Record to 'tbl_QA_Results'
+        else: #Append New Record to 'tbl_QA_Results'
             type = 'Append'
-            inQuery = ""
+            inQuery = (f"INSERT INTO tbl_QA_Results ( Query_Name, Time_Frame, Query_Type, Query_Result, Query_Run_Time,"
+                       f" Query_Description, QA_User, Is_Done, Data_Scope) SELECT '{Query_Name}' AS Query_Name, {Time_Frame} AS"
+                       f" Time_Frame, {Query_Type} AS Query_Type, {Query_Result} AS Query_Result, #{Query_Run_Time}# AS"
+                       f" Query_Run_Time, '{Query_Description}' AS Query_Description, '{QA_User}' AS QA_User, "
+                       f" {Is_Done} AS Is_Done, {Data_Scope} AS DataScope;")
 
         #Push the Update or Append Query
         dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
 
-        logMsg = (f'Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {cCheckInstance.inDBBE}'
-                  f' - {qcCheckInstance.inDBFE}')
+        logMsg = f"Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {qcCheckInstance.inDBBE}"
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)

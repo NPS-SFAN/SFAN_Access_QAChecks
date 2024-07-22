@@ -25,9 +25,9 @@ import generalDM as dm
 # Protocol Being Processes
 protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
 # Access Backend Database for the protocol
-inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240718 - Copy.accdb'
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240722 - Copy.accdb'
 # Access FrontEnd Database for the protocol
-inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240718v2.accdb'
+inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240722 - Copy.accdb'
 # Year Being Processed
 inYear = 2023
 # NPS User Name of person running the QC script.  This will be populated in the 'QA_USer' field of the 'tbl_QA_Results
@@ -69,7 +69,7 @@ def main():
 
         # Message Script Completed
         logMsg = f'Successfully Finished All QC Check Script for - {protocol}'
-        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+        dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
 
     except:
         messageTime = timeFun()
@@ -103,7 +103,6 @@ if __name__ == '__main__':
         pass
     else:
         os.makedirs(outDir)
-
 
     # Run Main Code Bloc
     main()

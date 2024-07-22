@@ -47,6 +47,19 @@ class qcChecks:
         :return:
         """
 
+        # Create the data management instance to  be used to define the logfile path and other general DM attributes
+        qcProtocolInstance = SNPLP.qcProtcol_SNPLPORE()
+
+        # Get the Subset of records for the year
+        outMethod = SNPLP.qcProtcol_SNPLPORE.createYearlyRecs(qcCheckInstance)
+        yearlyRecDF = outMethod[0]
+        inQuerySel = outMethod[1]
+
+        filterQueryName = qcProtocolInstance.filterRecQuery
+        # Push Yearly Records to be used in the QC routines back to Backend (i.e. qsel_QA_Control)
+        # Only need to do this once per year being processed
+        qcChecks.pushQueryToDB(inQuerySel, filterQueryName, qcCheckInstance, dmInstance)
+
         #Define the Queries to process
         outDFQueries = qcChecks.define_QCQueries(qcCheckInstance)
 
@@ -56,33 +69,23 @@ class qcChecks:
             queryDecrip_LU = row.get('QueryDescription')
             if qcCheckInstance.protocol.lower() == 'snplpore':
 
-                # Create the data management instance to  be used to define the logfile path and other general DM attributes
-                qcProtocolInstance = SNPLP.qcProtcol_SNPLPORE()
-
-                #Get the Subset of records for the year
-                outMethod = SNPLP.qcProtcol_SNPLPORE.createYearlyRecs(qcCheckInstance)
-                yearlyRecDF = outMethod[0]
-                inQuerySel = outMethod[1]
-
-                filterQueryName = qcProtocolInstance.filterRecQuery
-                #Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
-                qcChecks.pushQueryToDB(inQuerySel, filterQueryName, qcCheckInstance, dmInstance)
-
                 #Process each QC Routine
-                processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance)
+                processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF,
+                                                                     qcCheckInstance, dmInstance)
 
             elif qcCheckInstance.protocol.lower() == 'salmonids': #To Be Developed 7/16/2024
                 print('Test')
 
             else:
-                logMsg = f'WARNING - {qcCheckInstance.protocol} - is not defined - method QC_Checks.process_QCRequest - Exiting script'
-                dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+                logMsg = (f'WARNING - {qcCheckInstance.protocol} - is not defined - method QC_Checks.process_QCRequest '
+                          f'- Exiting script')
+                dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
                 exit()
 
 
             # Message QC Check Completed
             logMsg = f'Successfully Finished QC Check Script for - {qcCheckInstance.protocol} - {queryName_LU}'
-            dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
 
     def define_QCQueries(qcCheckInstance):
         """
@@ -121,7 +124,7 @@ class qcChecks:
         ####dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'
-        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+        dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
 
 
     def updateQAResultsTable(queryName, queryDecrip_LU, qcCheckInstance,dmInstance):
@@ -185,4 +188,4 @@ class qcChecks:
         dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
 
         logMsg = f"Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {qcCheckInstance.inDBBE}"
-        dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+        dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)

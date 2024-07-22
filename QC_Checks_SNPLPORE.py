@@ -79,11 +79,11 @@ class qcProtcol_SNPLPORE:
                                                               , dmInstance)
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
-                dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)
+                dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
                 exit()
 
             #For all QC queries update the 'tbl_QA_Results
-            qc.qcChecks.updateQAResultsTable(queryName_LU, queryDecrip_LU, qcCheckInstance, dmInstance)
+            qc.qcChecks.updateQAResultsTable(dmInstance.logFile, queryDecrip_LU, qcCheckInstance, dmInstance)
 
         except Exception as e:
             print(f"An error occurred: {e}")

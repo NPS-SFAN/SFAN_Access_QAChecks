@@ -229,7 +229,7 @@ class generalDMClass:
 
     def pushQuery(inQuerySel, queryName, inDBPath):
         """
-        Push SQL query defined in 'inQuerySel' to the output query 'queryName'
+        Push SQL query defined in 'inQuerySel' to the output query 'queryName'. Uses PyWin32 library.
 
         :param inQuerySel: SQL Query defining the query to be pushed back to the backend instance
         :param queryName: Name of query being pushed, will deleted first if exists
@@ -259,6 +259,36 @@ class generalDMClass:
 
         # Clean up COM objects
         del access_app
+
+    def pushQueryODBC (inQuerySel, queryName, inDBPath):
+        """
+        Push SQL query defined in 'inQuerySel' to the output query 'queryName'. Using an ODBC Connection
+
+        :param inQuerySel: SQL Query defining the query to be pushed back to the backend instance
+        :param queryName: Name of query being pushed, will deleted first if exists
+        :param inDBPath: path to database
+
+        :return:
+        """
+
+        # Connect via ODBC to Access Database
+        cnxn = generalDMClass.connect_DB_Access(inDBPath)
+
+        # Create a cursor object
+        cursor = cnxn.cursor()
+
+        #Define the full query
+        fullQuery = f"CREATE VIEW {queryName} AS {inQuerySel}"
+
+        try:
+            cursor.execute(fullQuery)
+            cnxn.commit()
+            print(f"Query '{queryName}' has been created in the database.")
+        except Exception as e:
+            print(f"Error: {e}")
+
+        # Close the connection
+        cnxn.close()
 
     def excuteQuery(inQuery, inDBBE):
         """

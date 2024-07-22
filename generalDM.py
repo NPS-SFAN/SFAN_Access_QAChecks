@@ -5,6 +5,7 @@ General Data Management workflow related methods.  Consider migrating this to a 
 import os.path
 import sys
 from datetime import datetime
+import traceback
 import pyodbc
 import pandas as pd
 import win32com.client
@@ -43,16 +44,17 @@ class generalDMClass:
         else:
             os.makedirs(workspace)
 
-        logFile = f'{workspace}\\{logFilePrefix}_logFile_{generalDMClass.dateNow}.txt'  # Name of the .txt script logfile which is saved in the workspace directory
+        logFileName1 = f'{logFilePrefix}_logFile_{generalDMClass.dateNow}.txt'
+        logFileName = os.path.join(workspace,logFileName1)
 
         # Check if logFile exists
-        if os.path.exists(logFile):
+        if os.path.exists(logFileName):
             pass
         else:
-            logFile = open(logFile, "w")  # Creating index file if it doesn't exist
+            logFile = open(logFileName, "w")  # Creating Log File
             logFile.close()
 
-        return logFile
+        return logFileName
 
 
     def messageLogFile(self, logMsg):
@@ -60,23 +62,26 @@ class generalDMClass:
         """
         Write Message to Logfile - routine add a date/time Now string time stamp
 
-        :param self:  generalDM Instance
+        :param self:  dmInstance
         :param logMsg: String with the logfile message to be appended to the Self.logFileName
         :return:
         """
 
+        try:
+            #logFileName_LU = self.logFileName.name
+            logFileName_LU = self.logFileName
 
-        #logFileName_LU = self.logFileName.name
-        logFileName_LU = self.logFileName
+            #Get Current Time
+            messageTime = generalDMClass.timeFun()
+            logMsg = f'{logMsg} - {messageTime}'
+            print(logMsg)
 
-        #Get Current Time
-        messageTime = generalDMClass.timeFun()
-        logMsg = f'{logMsg} - {messageTime}'
-        print(logMsg)
+            logFile = open(logFileName_LU, "a")
+            logFile.write(logMsg + "\n")
+            logFile.close()
+        except:
+            traceback.print_exc(file=sys.stdout)
 
-        logFile = open(logFileName_LU, "a")
-        logFile.write(logMsg + "\n")
-        logFile.close()
 
     def timeFun():
 
@@ -127,7 +132,7 @@ class generalDMClass:
         #No value returned in lookup table - exit script
         if lookupValueDF.shape[0] == 0:
             logMsg = f'WARNING - No value returned in lookup table for - {lookupValue} - EXITING script at - getLookUpValueAccess'
-            generalDMClass.messageLogFile(self=self, logMsg=logMsg)
+            generalDMClass.messageLogFile(dmInstance.logFile, logMsg=logMsg)
             sys.exit()
 
         #Convert lookup to series

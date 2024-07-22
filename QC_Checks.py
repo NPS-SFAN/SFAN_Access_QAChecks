@@ -117,6 +117,8 @@ class qcChecks:
 
         # Push the new query
         dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
+        #Note Using ODBC connect this requires ODBC Driver to be in place, using PYWIN32 instead.
+        ####dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'
         dm.generalDMClass.messageLogFile(self=dmInstance, logMsg=logMsg)

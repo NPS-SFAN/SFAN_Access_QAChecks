@@ -6,7 +6,7 @@ QC_Checks Methods/Functions to be used for Snowy Plover PORE Quality Control Val
 #Import Required Libraries
 import pandas as pd
 import glob, os, sys
-
+import traceback
 import QC_Checks as qc
 import generalDM as dm
 
@@ -71,28 +71,50 @@ class qcProtcol_SNPLPORE:
         """
         try:
             if queryName_LU == "qa_a102_Unverified_Events":
-                 qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance,
-                                                              dmInstance)
-
+                outFun = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF,
+                                                                             qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
             elif queryName_LU == "qa_f112_Incomplete_Weather":
-                qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance
-                                                              , dmInstance)
+                outFun = flagFieldsDic = qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryName_LU, queryDecrip_LU, yearlyRecDF,
+                                                                              qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
                 exit()
 
+            #####################################################################
+            # Below are needed for all queries - Push Query, Updated Description, Append/Update to tbl_QA_Results
+            #####################################################################
+
+            # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
+            qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
+
+            # Define the description for the created query
+            dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
+
             #For all QC queries update the 'tbl_QA_Results
             qc.qcChecks.updateQAResultsTable(queryName_LU, queryDecrip_LU, qcCheckInstance, dmInstance)
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
+            #Apply QC Flag if needed
+            # Convert the Raster Dictionary to a Dataframe
+            flagDefDf = pd.DataFrame.from_dict(flagFieldsDic, orient='columns')
+            applyFlag = flagDefDf.loc[0, 'ApplyFlag']
 
+            if applyFlag == 'Yes':
+                qc.qcChecks.applyQCFlag(queryName_LU, flagDefDf, qcCheckInstance, dmInstance)
+                logMsg = f"Success Applying QC Flags for  - {queryName}"
+                dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+
+        except:
+            traceback.print_exc(file=sys.stdout)
         finally:
             return f'Success - processQuery - {queryName_LU}'
 
 
-    def qa_a102_Unverified_Events(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+    def qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
         Query routine for validation check - qa_a102_Unverified_Events
 
@@ -103,7 +125,9 @@ class qcProtcol_SNPLPORE:
         :param qcCheckInstance: QC Check Instance
         :param dmInstance: data management instance which will have the logfile name
 
-        :return: Pushed
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
         """
 
         #Single Query Check
@@ -119,15 +143,17 @@ class qcProtcol_SNPLPORE:
                       f" (((qsel_QA_Control.DataProcessingLevelID)<2 Or (qsel_QA_Control.DataProcessingLevelID)"
                       f" Is Null)) ORDER BY qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name;")
 
-        #####################################################################
-        # Below are needed for all queries - Push Query, Updated Description, Append/Update to tbl_QA_Results
-        #####################################################################
+        flagFieldsDic = {'ApplyFlag': ['No']}
+
+        return flagFieldsDic
 
         # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
         qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
 
         # Define the description for the created query
         dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
+
+        return inQuerySel, flagFieldsDic
 
 
     def qa_f112_Incomplete_Weather(queryName_LU, queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
@@ -141,7 +167,9 @@ class qcProtcol_SNPLPORE:
         :param qcCheckInstance: QC Check Instance
         :param dmInstance: data management instance which will have the logfile name
 
-        :return: Pushed
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
         """
 
         #Single Query Check
@@ -164,12 +192,10 @@ class qcProtcol_SNPLPORE:
                       f" ((tbl_Event_Details.Cloud_Cover) Is Null))"
                       f" ORDER BY qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name;")
 
-        #####################################################################
-        # Below are needed for all queries - Push Query, Updated Description, Append/Update to tbl_QA_Results
-        #####################################################################
+        # Define the flag fields in the 'tbl_Event_Details' table, these are the fields to which the flag 'DFO' will be
+        # applied
 
-        # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
-        qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
+        flagFieldsDic = {'ApplyFlag': ['Yes']}
 
-        # Define the description for the created query
-        dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
+        return inQuerySel, flagFieldsDic
+

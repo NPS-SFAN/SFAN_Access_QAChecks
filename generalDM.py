@@ -132,7 +132,7 @@ class generalDMClass:
         #No value returned in lookup table - exit script
         if lookupValueDF.shape[0] == 0:
             logMsg = f'WARNING - No value returned in lookup table for - {lookupValue} - EXITING script at - getLookUpValueAccess'
-            generalDMClass.messageLogFile(dmInstance.logFile, logMsg=logMsg)
+            generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
             sys.exit()
 
         #Convert lookup to series

@@ -172,7 +172,7 @@ class qcChecks:
             #Update record in 'tbl_QA_Results'
             inQuery = (f"UPDATE tbl_QA_Results SET tbl_QA_Results.Query_Type = {Query_Type}, tbl_QA_Results.Query_Result"
                         f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
-                        f" = '{Query_Description}', tbl_QC_Results.QA_User = '{QA_User}',"
+                        f" = '{Query_Description}', tbl_QA_Results.QA_User = '{QA_User}',"
                         f" tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
                         f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
 

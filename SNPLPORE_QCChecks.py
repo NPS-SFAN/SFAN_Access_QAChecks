@@ -68,7 +68,7 @@ def main():
         qc.qcChecks.process_QCRequest(qcCheckInstance=qcCheckInstance, dmInstance=dmInstance)
 
         # Message Script Completed
-        logMsg = f'Successfully Finished All QC Check Script for - {protocol}'
+        logMsg = f'Successfully Finished All QC Checks for - {protocol}'
         dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
 
     except:

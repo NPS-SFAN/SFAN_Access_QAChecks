@@ -4,7 +4,7 @@ QC_Checks Methods/Functions to be used for general Quality Control Validation wo
 """
 #Import Required Dependices
 import pandas as pd
-import glob, os, sys
+import glob, os, sys, traceback
 import generalDM as dm
 import QC_Checks_SNPLPORE as SNPLP
 
@@ -120,7 +120,7 @@ class qcChecks:
 
         # Push the new query
         dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
-        #Note Using ODBC connect this requires ODBC Driver to be in place, using PYWIN32 instead.
+        #Not Using ODBC connect this requires ODBC Driver to be in place, using PYWIN32 instead.
         ####dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'
@@ -189,3 +189,68 @@ class qcChecks:
 
         logMsg = f"Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {qcCheckInstance.inDBBE}"
         dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+
+    def applyQCFlag(queryName_LU,flagDefDf, qcCheckInstance, dmInstance):
+        """
+        TBD
+
+        :param queryName_LU: QueryName being processed
+        :param flagDefDf: Data frame of the Flags Dictionary defining the flag field information
+        :param qcCheckInstance: QC Check Instance (has Database paths, etc
+        :param dmInstance: Data Management Instance
+
+        :return
+        """
+        try:
+            #STOPPED HERE 7/22/2024 KRS
+            # 1a) Read record for the query in 'tbl_QCQueries
+            inQuery = f"SELECT * FROM tbl_QCQueries WHERE [QueryName] = '{queryName_LU}';"
+            outDFQCFields = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+
+            inQuerySel = f"SELECT * FROM {queryName_LU}"
+            # 1b) Read in the inQuerySel
+            outDFwRecs = dm.generalDMClass.connect_to_AcessDB_DF(inQuerySel, qcCheckInstance.inDBFE)
+
+
+
+            # 2) Apply the QC Flag where 'DFO' doesn't exists
+            outDFNoFlag = outDFwRecs[~outDFwRecs['EventDetailsQCFlag'].str.contains('DFO', na=False)]
+
+            # Delete Temp Table (tmpQCTable) if Exists
+            dm.generalDMClass.tableExistsDelete(tableName='tmpQCTable', inDBPath=qcCheckInstance.inDBBE)
+
+            # Create the Temporary Table and Populate with the dataframe values
+            dm.generalDMClass.createTableFromDF(outDFNoFlag, 'tmpQCTable', qcCheckInstance.inDBBE)
+
+
+            #Define the Update Query no Existing QC Flag (e.g. DFO) for this iteration
+            flagTable_LU = outDFQCFields.loc[0, 'FlagTable']
+            qcFlagField_LU = outDFQCFields.loc[0, 'FlagField']
+            qcFlag_LU = outDFQCFields.loc[0, 'QCFlag']
+            joinField_LU = outDFQCFields.loc[0, 'JoinField']
+
+            inQuery = (f"UPDATE tmpQCTable INNER JOIN {flagTable_LU} ON tmpQCTable.{joinField_LU} ="
+                       f" {flagTable_LU}.{joinField_LU} SET {flagTable_LU}.{qcFlagField_LU} = IIf(IsNull([{qcFlagField_LU}])"
+                       f",'{qcFlag_LU}',[{qcFlagField_LU}] & ';{qcFlag_LU}';")
+
+            # Apply the QC Flag
+            dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
+
+            logMsg = f'Applied QC Flag for records with NO EXISTING QC Flag - {queryName_LU}'
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+
+            # 3) Apply the QC Flag where 'DFO' does exist
+            outDFWithFlag = outDFwRecs[outDFwRecs['EventDetailsQCFlag'].str.contains('DFO', na=False)]
+
+            # Apply the QC Flag - DFO
+            # First get the relevant info
+            inQuery = (f"SELECT qa_f112_Incomplete_Weather.Event_ID INTO tempQCFlag FROM qa_f112_Incomplete_Weather;")
+
+            # Create the tempTable 'tempQCFlag
+            dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
+
+            # Apply the QC flag via the 'tempQCFlag' table
+            # If Null add 'DFO' else existing and 'DFO'.
+
+        except:
+            traceback.print_exc(file=sys.stdout)

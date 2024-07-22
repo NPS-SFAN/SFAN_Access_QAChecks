@@ -360,3 +360,99 @@ class generalDMClass:
 
         # Clean up COM objects
         del access_app
+
+    def tableExistsDelete(tableName, inDBPath):
+        """
+        Check if table exists in the database if yes delete, using pywin32 to hit the Access COM interface, ODBC
+        doesn't have permissions to hit the 'MSYS' variables
+
+        :param tableName: Name of query being pushed, will deleted first if exists
+        :param inDBPath: path to database
+
+        :return:
+        """
+
+        # Initialize the Access application
+        access_app = win32com.client.Dispatch('Access.Application')
+
+        # Open the Access database
+        access_app.OpenCurrentDatabase(inDBPath)
+
+        # Get the current database object
+        db = access_app.CurrentDb()
+
+        try:
+            # Check if the query exists before attempting to delete it
+            tableExists = False
+            for table in db.TableDefs:
+                if table.Name == tableName:
+                    tableExists = True
+                    break
+
+            if tableExists:
+                # Delete the query
+                db.TableDefs.Delete(tableName)
+                print(f"Table '{tableName}' has been deleted from the database.")
+            else:
+                print(f"Table '{tableName}' does not exist in the database.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            # Close the database and quit Access
+            access_app.CloseCurrentDatabase()
+            access_app.Quit()
+
+        # Clean up COM objects
+        del access_app
+
+    def createTableFromDF(df, tableName, inDBPath):
+        """
+        From Passed Dataframe create new table in Access DB
+
+        :param df: Data Frame to be created
+        :param tableName: Name of table to be created
+        :param inDBPath: Full path to backend database
+
+        :return:        """
+
+        cnxn = generalDMClass.connect_DB_Access(inDBPath)
+
+        # Get column names and types
+        columns = df.columns
+        dtypes = df.dtypes
+        col_defs = []
+
+        for column, dtype in zip(columns, dtypes):
+            if dtype == 'int64':
+                col_defs.append(f"[{column}] INTEGER")
+            elif dtype == 'float64':
+                col_defs.append(f"[{column}] DOUBLE")
+            elif dtype == 'object':
+                col_defs.append(f"[{column}] TEXT")
+            elif dtype == 'datetime64[ns]':
+                col_defs.append(f"[{column}] DATETIME")
+            elif dtype == 'bool':
+                col_defs.append(f"[{column}] YESNO")
+            else:
+                raise Exception(f"Unrecognized dtype: {dtype}")
+
+        col_defs_str = ", ".join(col_defs)
+
+        create_table_query = f"CREATE TABLE {tableName} ({col_defs_str})"
+        # Create a cursor object
+        cursor = cnxn.cursor()
+        cursor.execute(create_table_query)
+
+        # Insert data in the dataframe (i.e. df) into the created table
+        for index, row in df.iterrows():
+            insert_query = f"INSERT INTO {tableName} VALUES ({', '.join(['?' for _ in row])})"
+            cursor.execute(insert_query, tuple(row))
+
+        # Commit the transaction
+        cnxn.commit()
+
+        # Close the connection
+        cursor.close()
+        cnxn.close()
+
+        print(f'Created Temp Table - {tableName}')

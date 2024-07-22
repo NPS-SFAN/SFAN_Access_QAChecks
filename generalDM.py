@@ -317,6 +317,8 @@ class generalDMClass:
 
         except Exception as e:
             print(f"An error occurred in execute query {e}")
+            traceback.print_exc(file=sys.stdout)
+
         finally:
             # Close the database and quit Access
             cnxn.close()

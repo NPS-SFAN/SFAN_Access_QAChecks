@@ -109,6 +109,19 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_f152_StopTime_MoreThanEvent":
+                outFun = qcProtcol_SNPLPORE.qa_f152_StopTime_MoreThanEvent(queryDecrip_LU, yearlyRecDF,
+                                                                              qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_h102_Missing_Observers":
+                outFun = qcProtcol_SNPLPORE.qa_h102_Missing_Observers(queryDecrip_LU, yearlyRecDF,
+                                                                              qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
@@ -119,7 +132,7 @@ class qcProtcol_SNPLPORE:
             # Below are needed for all queries - Push Query, Updated Description, Append/Update to tbl_QA_Results
             #####################################################################
 
-            # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
+            # Push Yearly Records Query back to Backend (e.g. qa_f132_MoreCheckedSNPL_ThanTotal)
             qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
 
             # Define the description for the created query
@@ -364,6 +377,91 @@ class qcProtcol_SNPLPORE:
                           f" qsel_QA_Control.Start_Date DESC;")
 
             # Define the flag fields in the 'tbl_Event_Details' table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+    def qa_f152_StopTime_MoreThanEvent(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_f142_MoreBandedSNPL_ThanChecked. Returns surveys where the predator
+        stop time (minutes) is longer than the total survey event time (minutes). QC default value is LEPST.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+            # Single Query Check
+            queryName_LU = 'qa_f152_StopTime_MoreThanEvent'
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name,"
+                          f" tbl_Event_Details.QCFlag AS EventDetailsQCFlag, tbl_Event_Details.QCNotes AS "
+                          f"EventDetailsQCNotes, tbl_Event_Details.Predtor_Survey, tbl_Event_Details.Predator_Notes, "
+                          f"tbl_Event_Details.PredatorStop, tbl_Event_Details.Event_Notes, DateDiff('n',[Start_Time],"
+                          f"[End_Time]) AS SurveyMinutes, qsel_QA_Control.Start_Time, qsel_QA_Control.End_Time, "
+                          f"'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS RecTable, 'Event_ID' AS RecField, "
+                          f"tbl_Event_Details.Event_ID AS RecValue FROM qsel_QA_Control INNER JOIN tbl_Event_Details "
+                          f"ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID "
+                          f"WHERE (((DateDiff('n',[Start_Time],[End_Time]))<[PredatorStop])) ORDER BY "
+                          f"qsel_QA_Control.Start_Date DESC;")
+
+            # Define the flag fields in the 'tbl_Event_Details' table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+    def qa_h102_Missing_Observers(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_h102_Missing_Observers. Returns surveys where the predator
+        stop time (minutes) is longer than the total survey event time (minutes). QC default value is LEPST.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+            # Single Query Check
+            queryName_LU = 'qa_h102_Missing_Observers'
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name, "
+                          f"qsel_QA_Control.QCFlag AS EventQCFlag, qsel_QA_Control.QCNotes AS EventQCNotes, "
+                          f"xref_Event_Contacts.Contact_ID, 'frm_Data_Entry' AS varObject, 'tbl_Event_Details' "
+                          f"AS RecTable, 'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue "
+                          f"FROM qsel_QA_Control LEFT JOIN xref_Event_Contacts ON qsel_QA_Control.Event_ID = "
+                          f"xref_Event_Contacts.Event_ID WHERE (((xref_Event_Contacts.Contact_ID) Is Null));")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
             # applied
 
             flagFieldsDic = {'ApplyFlag': ['Yes']}

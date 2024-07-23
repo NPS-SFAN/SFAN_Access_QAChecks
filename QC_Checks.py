@@ -98,7 +98,7 @@ class qcChecks:
 
         except Exception as e:
 
-            logMsg = (f'ERROR - An error occurred in the main loop: {e}')
+            logMsg = (f'ERROR - An error occurred process_QCRequest: {e}')
             dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
             logging.critical(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
@@ -154,57 +154,65 @@ class qcChecks:
 
         :return
         """
+        try:
+            #Read query into a dataframe allowing for creation of the dataframe to append or update
+            inQuery = f'Select * FROM {queryName}'
+            outDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
 
-        #Read query into a dataframe allowing for creation of the dataframe to append or update
-        inQuery = f'Select * FROM {queryName}'
-        outDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+            #Create the Summary of the output Query to be pushed to 'tbl_QA_Results' - below are fields in the
+            # 'tbl_QA_Results' table
 
-        #Create the Summary of the output Query to be pushed to 'tbl_QA_Results' - below are fields in the
-        # 'tbl_QA_Results' table
+            Query_Name = queryName
+            Time_Frame = str(qcCheckInstance.yearLU)
+            Query_Type = queryName[6]
+            Query_Result = str(outDF.shape[0])
 
-        Query_Name = queryName
-        Time_Frame = str(qcCheckInstance.yearLU)
-        Query_Type = queryName[6]
-        Query_Result = str(outDF.shape[0])
+            from datetime import datetime
+            now = datetime.now()
+            Query_Run_Time = now.strftime('%m/%d/%y %H:%M:%S')
+            Query_Description = queryDecrip_LU
+            QA_User = qcCheckInstance.inUser
+            Is_Done = 0
+            Data_Scope = 0
 
-        from datetime import datetime
-        now = datetime.now()
-        Query_Run_Time = now.strftime('%m/%d/%y %H:%M:%S')
-        Query_Description = queryDecrip_LU
-        QA_User = qcCheckInstance.inUser
-        Is_Done = 0
-        Data_Scope = 0
+            # Determine if record for 'Query_Name' and 'Time_Frame' already exists. If yes - update, else append
+            # Read query into a dataframe allowing for creation of the dataframe to append or update
+            inQuery = (f"Select COUNT(*) AS RecCount FROM tbl_QA_Results WHERE [Query_Name] = '{queryName}' AND" 
+                       f" [Time_Frame] ='{Time_Frame}'")
 
-        # Determine if record for 'Query_Name' and 'Time_Frame' already exists. If yes - update, else append
-        # Read query into a dataframe allowing for creation of the dataframe to append or update
-        inQuery = (f"Select COUNT(*) AS RecCount FROM tbl_QA_Results WHERE [Query_Name] = '{queryName}' AND" 
-                   f" [Time_Frame] ='{Time_Frame}'")
+            outCountDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+            countValue = outCountDF['RecCount'][0]
 
-        outCountDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
-        countValue = outCountDF['RecCount'][0]
+            if countValue >= 1:  # Already exists
+                type = 'Update'
+                #Update record in 'tbl_QA_Results'
+                inQuery = (f"UPDATE tbl_QA_Results SET tbl_QA_Results.Query_Type = {Query_Type}, tbl_QA_Results.Query_Result"
+                            f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
+                            f" = '{Query_Description}', tbl_QA_Results.QA_User = '{QA_User}',"
+                            f" tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
+                            f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
 
-        if countValue >= 1:  # Already exists
-            type = 'Update'
-            #Update record in 'tbl_QA_Results'
-            inQuery = (f"UPDATE tbl_QA_Results SET tbl_QA_Results.Query_Type = {Query_Type}, tbl_QA_Results.Query_Result"
-                        f" = {Query_Result}, tbl_QA_Results.Query_Run_Time = #{Query_Run_Time}#, tbl_QA_Results.Query_Description"
-                        f" = '{Query_Description}', tbl_QA_Results.QA_User = '{QA_User}',"
-                        f" tbl_QA_Results.Is_Done = 0, tbl_QA_Results.Data_Scope = 0 WHERE"
-                        f" tbl_QA_Results.Query_Name = '{queryName}' AND tbl_QA_Results.Time_Frame = '{Time_Frame}';")
+            else: #Append New Record to 'tbl_QA_Results'
+                type = 'Append'
+                inQuery = (f"INSERT INTO tbl_QA_Results ( Query_Name, Time_Frame, Query_Type, Query_Result, Query_Run_Time,"
+                           f" Query_Description, QA_User, Is_Done, Data_Scope) SELECT '{Query_Name}' AS Query_Name, {Time_Frame} AS"
+                           f" Time_Frame, {Query_Type} AS Query_Type, {Query_Result} AS Query_Result, #{Query_Run_Time}# AS"
+                           f" Query_Run_Time, '{Query_Description}' AS Query_Description, '{QA_User}' AS QA_User, "
+                           f" {Is_Done} AS Is_Done, {Data_Scope} AS DataScope;")
 
-        else: #Append New Record to 'tbl_QA_Results'
-            type = 'Append'
-            inQuery = (f"INSERT INTO tbl_QA_Results ( Query_Name, Time_Frame, Query_Type, Query_Result, Query_Run_Time,"
-                       f" Query_Description, QA_User, Is_Done, Data_Scope) SELECT '{Query_Name}' AS Query_Name, {Time_Frame} AS"
-                       f" Time_Frame, {Query_Type} AS Query_Type, {Query_Result} AS Query_Result, #{Query_Run_Time}# AS"
-                       f" Query_Run_Time, '{Query_Description}' AS Query_Description, '{QA_User}' AS QA_User, "
-                       f" {Is_Done} AS Is_Done, {Data_Scope} AS DataScope;")
+            #Push the Update or Append Query
+            dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
 
-        #Push the Update or Append Query
-        dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
+            logMsg = f"Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {qcCheckInstance.inDBBE}"
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.info(logMsg)
 
-        logMsg = f"Success for QC Check - {queryName} - {type} made to table tbl_QA_Results - in {qcCheckInstance.inDBBE}"
-        dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in UpdateQAResultsTable: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.critical(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
 
     def applyQCFlag(queryName_LU,flagDefDf, qcCheckInstance, dmInstance):
         """
@@ -258,8 +266,13 @@ class qcChecks:
 
             logMsg = f'Applied QC Flag for records with NO EXISTING QC Flag - {queryName_LU}'
             dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.info(logMsg)
 
-        except:
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in UpdateQAResultsTable: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.critical(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
 
 if __name__ == "__name__":

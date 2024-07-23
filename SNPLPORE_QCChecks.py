@@ -83,7 +83,7 @@ def main():
 
     except Exception as e:
 
-        logMsg = (f'ERROR - "Exiting Error - QCChecks.py: {e}')
+        logMsg = f'ERROR - "Exiting Error - QCChecks.py: {e}'
         dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
         logging.critical(logMsg, exc_info=True)
         traceback.print_exc(file=sys.stdout)

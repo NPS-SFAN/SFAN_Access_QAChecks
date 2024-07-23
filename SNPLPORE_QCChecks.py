@@ -1,6 +1,6 @@
 """
-QCChecksRoot.py
-Root Quality Control Checks Script - setup script.
+SFAN_AccessQCChecks.py
+Parent Quality Control Checks Setup Script.
 
 Output:
 
@@ -21,6 +21,11 @@ import traceback
 from datetime import datetime
 import QC_Checks as qc
 import generalDM as dm
+import logging
+import log_config  # Import the logging configuration
+
+# Get the logger
+logger = logging.getLogger(__name__)
 
 # Protocol Being Processes
 protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
@@ -39,6 +44,8 @@ outName = f'{protocol}_{inYear}'  # Output name for excel file and logile
 outDir = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Deliverable\2024'  # Directory Output Location
 
 def main():
+    logger = logging.getLogger(__name__)
+
     try:
         session_info.show()
         # Set option in pandas to not allow chaining (views) of dataframes, instead force copy to be performed.
@@ -54,7 +61,9 @@ def main():
         # Print out the name space of the instance
         print(qcCheckInstance.__dict__)
 
-        # Logfile will be saved in the workspace directory which is child of the fileDir
+        # Logfile will be saved in the workspace directory which is child of the fileDir - this is in addition to the
+        # logger file in 'log_config.py'
+
         logFile = dm.generalDMClass.createLogFile(logFilePrefix=outName, workspaceParent=outDir)
 
         # Create the data management instance to  be used to define the logfile path and other general DM attributes

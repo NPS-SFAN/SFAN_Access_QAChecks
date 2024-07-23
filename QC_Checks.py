@@ -90,7 +90,6 @@ class qcChecks:
                     logging.warning(logMsg)
                     exit()
 
-
                 # Message QC Check Completed
                 logMsg = f'Successfully Finished QC Check Script for - {qcCheckInstance.protocol} - {queryName_LU}'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)

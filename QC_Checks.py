@@ -77,7 +77,7 @@ class qcChecks:
                 if qcCheckInstance.protocol.lower() == 'snplpore':
 
                     #Process each QC Routine
-                    processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF,
+                    SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF,
                                                                          qcCheckInstance, dmInstance)
 
                 elif qcCheckInstance.protocol.lower() == 'salmonids': #To Be Developed 7/16/2024

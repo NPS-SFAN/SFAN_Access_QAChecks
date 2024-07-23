@@ -192,7 +192,13 @@ class qcChecks:
 
     def applyQCFlag(queryName_LU,flagDefDf, qcCheckInstance, dmInstance):
         """
-        TBD
+        Routine to apply the Quality Control flag to the underlying table per Quality Control check.  Information is
+        being pulled from the 'tbl_QCQueries' table in the backend database.  Processing creates a temporary table
+        in the backend dataabase with the records in need of data flag to be applied.  From this temporary table
+        and the information in 'tbl_QCQueries' the join table (e.g. tbl_Events, etc.), join field (e.g. 'Event_ID'),
+        field to apply the flag to (e.g. QCFlag) and flag value to apply (e.g. DFO, etc.) are pushed.
+        If the flag already exists the flag will not be pushed. Existing flags are not overwritten with new flags
+        being concatenated.
 
         :param queryName_LU: QueryName being processed
         :param flagDefDf: Data frame of the Flags Dictionary defining the flag field information
@@ -202,7 +208,7 @@ class qcChecks:
         :return
         """
         try:
-            #STOPPED HERE 7/22/2024 KRS
+
             # 1a) Read record for the query in 'tbl_QCQueries
             inQuery = f"SELECT * FROM tbl_QCQueries WHERE [QueryName] = '{queryName_LU}';"
             outDFQCFields = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
@@ -210,8 +216,6 @@ class qcChecks:
             inQuerySel = f"SELECT * FROM {queryName_LU}"
             # 1b) Read in the inQuerySel
             outDFwRecs = dm.generalDMClass.connect_to_AcessDB_DF(inQuerySel, qcCheckInstance.inDBFE)
-
-
 
             # 2) Apply the QC Flag where 'DFO' doesn't exists
             outDFNoFlag = outDFwRecs[~outDFwRecs['EventDetailsQCFlag'].str.contains('DFO', na=False)]
@@ -231,26 +235,13 @@ class qcChecks:
 
             inQuery = (f"UPDATE tmpQCTable INNER JOIN {flagTable_LU} ON tmpQCTable.{joinField_LU} ="
                        f" {flagTable_LU}.{joinField_LU} SET {flagTable_LU}.{qcFlagField_LU} = IIf(IsNull([{qcFlagField_LU}])"
-                       f",'{qcFlag_LU}',[{qcFlagField_LU}] & ';{qcFlag_LU}';")
+                       f",'{qcFlag_LU}',[{qcFlagField_LU}] & ';{qcFlag_LU}');")
 
             # Apply the QC Flag
             dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
 
             logMsg = f'Applied QC Flag for records with NO EXISTING QC Flag - {queryName_LU}'
             dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
-
-            # 3) Apply the QC Flag where 'DFO' does exist
-            outDFWithFlag = outDFwRecs[outDFwRecs['EventDetailsQCFlag'].str.contains('DFO', na=False)]
-
-            # Apply the QC Flag - DFO
-            # First get the relevant info
-            inQuery = (f"SELECT qa_f112_Incomplete_Weather.Event_ID INTO tempQCFlag FROM qa_f112_Incomplete_Weather;")
-
-            # Create the tempTable 'tempQCFlag
-            dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
-
-            # Apply the QC flag via the 'tempQCFlag' table
-            # If Null add 'DFO' else existing and 'DFO'.
 
         except:
             traceback.print_exc(file=sys.stdout)

@@ -7,7 +7,10 @@ import pandas as pd
 import glob, os, sys, traceback
 import generalDM as dm
 import QC_Checks_SNPLPORE as SNPLP
+import logging
+import log_config
 
+logger = logging.getLogger(__name__)
 class qcChecks:
 
     #Class Variables
@@ -47,6 +50,9 @@ class qcChecks:
         :return:
         """
 
+        #Configure Logging:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
         # Create the data management instance to  be used to define the logfile path and other general DM attributes
         qcProtocolInstance = SNPLP.qcProtcol_SNPLPORE()
 
@@ -63,29 +69,39 @@ class qcChecks:
         #Define the Queries to process
         outDFQueries = qcChecks.define_QCQueries(qcCheckInstance)
 
-        # Iterate through the QC Queries defined in 'tbl_QCQueries' via outDFQueries
-        for index, row in outDFQueries.iterrows():
-            queryName_LU = row.get('QueryName')
-            queryDecrip_LU = row.get('QueryDescription')
-            if qcCheckInstance.protocol.lower() == 'snplpore':
+        try:
+            # Iterate through the QC Queries defined in 'tbl_QCQueries' via outDFQueries
+            for index, row in outDFQueries.iterrows():
+                queryName_LU = row.get('QueryName')
+                queryDecrip_LU = row.get('QueryDescription')
+                if qcCheckInstance.protocol.lower() == 'snplpore':
 
-                #Process each QC Routine
-                processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF,
-                                                                     qcCheckInstance, dmInstance)
+                    #Process each QC Routine
+                    processQuery = SNPLP.qcProtcol_SNPLPORE.processQuery(queryName_LU, queryDecrip_LU, yearlyRecDF,
+                                                                         qcCheckInstance, dmInstance)
 
-            elif qcCheckInstance.protocol.lower() == 'salmonids': #To Be Developed 7/16/2024
-                print('Test')
+                elif qcCheckInstance.protocol.lower() == 'salmonids': #To Be Developed 7/16/2024
+                    print('Test')
 
-            else:
-                logMsg = (f'WARNING - {qcCheckInstance.protocol} - is not defined - method QC_Checks.process_QCRequest '
-                          f'- Exiting script')
+                else:
+                    logMsg = (f'WARNING - {qcCheckInstance.protocol} - is not defined - method QC_Checks.process_QCRequest '
+                              f'- Exiting script')
+                    dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+                    logging.warning(logMsg)
+                    exit()
+
+
+                # Message QC Check Completed
+                logMsg = f'Successfully Finished QC Check Script for - {qcCheckInstance.protocol} - {queryName_LU}'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
-                exit()
+                logging.info(logMsg)
 
+        except Exception as e:
 
-            # Message QC Check Completed
-            logMsg = f'Successfully Finished QC Check Script for - {qcCheckInstance.protocol} - {queryName_LU}'
+            logMsg = (f'ERROR - An error occurred in the main loop: {e}')
             dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.critical(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
 
     def define_QCQueries(qcCheckInstance):
         """
@@ -245,3 +261,6 @@ class qcChecks:
 
         except:
             traceback.print_exc(file=sys.stdout)
+
+if __name__ == "__name__":
+    logger.info("Running QC_Checks.py")

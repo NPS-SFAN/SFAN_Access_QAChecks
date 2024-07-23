@@ -105,7 +105,7 @@ class qcProtcol_SNPLPORE:
 
             if applyFlag == 'Yes':
                 qc.qcChecks.applyQCFlag(queryName_LU, flagDefDf, qcCheckInstance, dmInstance)
-                logMsg = f"Success Applying QC Flags for  - {queryName}"
+                logMsg = f"Success Applying QC Flags for  - {queryName_LU}"
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
 
         except:

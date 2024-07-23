@@ -213,7 +213,7 @@ class qcChecks:
             logging.critical(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
 
-    def applyQCFlag(queryName_LU,flagDefDf, qcCheckInstance, dmInstance):
+    def applyQCFlag(queryName_LU, flagDefDf, qcCheckInstance, dmInstance):
         """
         Routine to apply the Quality Control flag to the underlying table per Quality Control check.  Information is
         being pulled from the 'tbl_QCQueries' table in the backend database.  Processing creates a temporary table
@@ -235,37 +235,47 @@ class qcChecks:
             # 1a) Read record for the query in 'tbl_QCQueries
             inQuery = f"SELECT * FROM tbl_QCQueries WHERE [QueryName] = '{queryName_LU}';"
             outDFQCFields = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBFE)
+            #Get Flag Value for records not passing the QC check.
+            qcFlag_LU = outDFQCFields.loc[0, 'QCFlag']
 
             inQuerySel = f"SELECT * FROM {queryName_LU}"
-            # 1b) Read in the inQuerySel
+            # 1b) Read in the Final Query
             outDFwRecs = dm.generalDMClass.connect_to_AcessDB_DF(inQuerySel, qcCheckInstance.inDBFE)
 
             # 2) Apply the QC Flag where 'DFO' doesn't exists
-            outDFNoFlag = outDFwRecs[~outDFwRecs['EventDetailsQCFlag'].str.contains('DFO', na=False)]
+            outDFNoFlag = outDFwRecs[~outDFwRecs['EventDetailsQCFlag'].str.contains(qcFlag_LU, na=False)]
 
-            # Delete Temp Table (tmpQCTable) if Exists
-            dm.generalDMClass.tableExistsDelete(tableName='tmpQCTable', inDBPath=qcCheckInstance.inDBBE)
+            #Delete Temp Table (if exists) and apply the QC Flag if number of records >0, else no new flagging requried.
+            if len(outDFNoFlag) > 0:
+                # Delete Temp Table (tmpQCTable) if Exists
+                dm.generalDMClass.tableExistsDelete(tableName='tmpQCTable', inDBPath=qcCheckInstance.inDBBE)
 
-            # Create the Temporary Table and Populate with the dataframe values
-            dm.generalDMClass.createTableFromDF(outDFNoFlag, 'tmpQCTable', qcCheckInstance.inDBBE)
+                # Create the Temporary Table and Populate with the dataframe records without the records
+                dm.generalDMClass.createTableFromDF(outDFNoFlag, 'tmpQCTable', qcCheckInstance.inDBBE)
 
 
-            #Define the Update Query no Existing QC Flag (e.g. DFO) for this iteration
-            flagTable_LU = outDFQCFields.loc[0, 'FlagTable']
-            qcFlagField_LU = outDFQCFields.loc[0, 'FlagField']
-            qcFlag_LU = outDFQCFields.loc[0, 'QCFlag']
-            joinField_LU = outDFQCFields.loc[0, 'JoinField']
+                #Define the Update Query no Existing QC Flag (e.g. DFO) for this iteration
+                flagTable_LU = outDFQCFields.loc[0, 'FlagTable']
+                qcFlagField_LU = outDFQCFields.loc[0, 'FlagField']
+                joinField_LU = outDFQCFields.loc[0, 'JoinField']
 
-            inQuery = (f"UPDATE tmpQCTable INNER JOIN {flagTable_LU} ON tmpQCTable.{joinField_LU} ="
-                       f" {flagTable_LU}.{joinField_LU} SET {flagTable_LU}.{qcFlagField_LU} = IIf(IsNull([{qcFlagField_LU}])"
-                       f",'{qcFlag_LU}',[{qcFlagField_LU}] & ';{qcFlag_LU}');")
+                inQuery = (f"UPDATE tmpQCTable INNER JOIN {flagTable_LU} ON tmpQCTable.{joinField_LU} ="
+                           f" {flagTable_LU}.{joinField_LU} SET {flagTable_LU}.{qcFlagField_LU} = IIf(IsNull([{qcFlagField_LU}])"
+                           f",'{qcFlag_LU}',[{qcFlagField_LU}] & ';{qcFlag_LU}');")
 
-            # Apply the QC Flag
-            dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
+                # Apply the QC Flag
+                dm.generalDMClass.excuteQuery(inQuery, qcCheckInstance.inDBBE)
 
-            logMsg = f'Applied QC Flag for records with NO EXISTING QC Flag - {queryName_LU}'
-            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
-            logging.info(logMsg)
+                logMsg = f'Applied QC Flag for records with NO EXISTING QC Flag - {queryName_LU}'
+                dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+                logging.info(logMsg)
+            else:
+                outDFWithFlag = outDFwRecs[outDFwRecs['EventDetailsQCFlag'].str.contains(qcFlag_LU, na=False)]
+                recAlreadyFlagged = len(outDFWithFlag)
+
+                logMsg = f'No New QC Flags applied - {queryName_LU} - Number Already flagged was {recAlreadyFlagged}'
+                dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+                logging.info(logMsg)
 
         except Exception as e:
 

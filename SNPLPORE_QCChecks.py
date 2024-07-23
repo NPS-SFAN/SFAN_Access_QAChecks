@@ -79,16 +79,14 @@ def main():
         # Message Script Completed
         logMsg = f'Successfully Finished All QC Checks for - {protocol}'
         dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+        logging.info(logMsg)
 
-    except:
-        messageTime = timeFun()
-        scriptMsg = "Exiting Error - QCChecks.py - " + messageTime
-        print(scriptMsg)
-        logFile = open(logFileName, "a")
-        logFile.write(scriptMsg + "\n")
-        logFile.close()
+    except Exception as e:
+
+        logMsg = (f'ERROR - "Exiting Error - QCChecks.py: {e}')
+        dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+        logging.critical(logMsg, exc_info=True)
         traceback.print_exc(file=sys.stdout)
-
 
     finally:
         exit()

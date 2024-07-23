@@ -69,24 +69,33 @@ class qcProtcol_SNPLPORE:
         :param qcCheckInstance: QC Check Instance
         :param dmInstance: data management instance which will have the logfile name
 
-
         :return:
         """
 
         try:
             if queryName_LU == "qa_a102_Unverified_Events":
-                outFun = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(nobueno2, queryDecrip_LU, yearlyRecDF, qcCheckInstance,
+                outFun = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance,
                                                                       dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
+
             elif queryName_LU == "qa_f112_Incomplete_Weather":
-                outFun = flagFieldsDic = qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryDecrip_LU, yearlyRecDF,
+                outFun = qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryDecrip_LU, yearlyRecDF,
                                                                                        qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_f122_CompleteSurvey_IncompleteSNPL":
+                outFun = qcProtcol_SNPLPORE.qa_f122_CompleteSurvey_IncompleteSNPL(queryDecrip_LU,
+                                                                                                  yearlyRecDF,
+                                                                                                  qcCheckInstance,
+                                                                                                  dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+                logging.error(logMsg, exc_info=True)
                 exit()
 
             #####################################################################
@@ -119,10 +128,10 @@ class qcProtcol_SNPLPORE:
             traceback.print_exc(file=sys.stdout)
             exit()
 
-
     def qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
-        Query routine for validation check - qa_a102_Unverified_Events
+        Query routine for validation check - qa_a102_Unverified_Events. Shows records that have not been marked as
+        verified.  No QC Flag applied, data processing level should be Raw
 
         :param queryName_LU: Name of query routine being processes this is query name in the 'Query_Name' field in
          table 'tbl_QCQueries'
@@ -140,7 +149,6 @@ class qcProtcol_SNPLPORE:
             #Single Query Check
             queryName_LU = 'qa_a102_Unverified_Events'
 
-            #inQuerySel = f"""SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name, qsel_QA_Control.QCFlag, qsel_QA_Control.QCNotes, tlu_Data_Processing_Level.Label AS DataProcessingLevel, "frm_Data_Entry" AS varObject, "[Event_ID] = '" & [tbl_Events].[Event_ID] & "'" AS VarFilter, "" AS varSubObject, "" AS varSubFilter FROM qsel_QA_Control LEFT JOIN tlu_Data_Processing_Level ON qsel_QA_Control.DataProcessingLevelID = tlu_Data_Processing_Level.DataProcessingLevelID WHERE (((qsel_QA_Control.DataProcessingLevelID)<2 Or (qsel_QA_Control.DataProcessingLevelID) Is Null)) ORDER BY qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name;"""
             inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name,"
                           f" qsel_QA_Control.QCFlag, qsel_QA_Control.QCNotes, tlu_Data_Processing_Level.Label AS"
                           f" DataProcessingLevel, 'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS"
@@ -152,22 +160,20 @@ class qcProtcol_SNPLPORE:
 
             flagFieldsDic = {'ApplyFlag': ['No']}
 
-            return flagFieldsDic
-
-            # Push Yearly Records to Query back to Backend (i.e. qsel_QA_Control)
-            qc.qcChecks.pushQueryToDB(inQuerySel, queryName_LU, qcCheckInstance, dmInstance)
-
-            # Define the description for the created query
-            dm.generalDMClass.queryDesc(queryName_LU, queryDecrip_LU, qcCheckInstance)
-
-        except:
-            traceback.print_exc(file=sys.stdout)
-        finally:
             return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
 
     def qa_f112_Incomplete_Weather (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
-        Query routine for validation check - qa_f112_Incomplete_Weather
+        Query routine for validation check - qa_f112_Incomplete_Weather. Returns complete surveys (not marked as
+        incomplete) but are missing weather condition data.  QC default value is DFO.
 
         :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
         :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
@@ -205,11 +211,66 @@ class qcProtcol_SNPLPORE:
 
             flagFieldsDic = {'ApplyFlag': ['Yes']}
 
-        except:
-            traceback.print_exc(file=sys.stdout)
-
-        finally:
             return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+    def qa_f122_CompleteSurvey_IncompleteSNPL(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_f122_CompleteSurvey_IncompleteSNPL. Returns surveys not marked as
+        incomplete but that are missing SNPL summary data. QC dafault value is DFO
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+            # Single Query Check
+            queryName_LU = 'qa_f122_CompleteSurvey_IncompleteSNPL'
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name,"
+                          f" tbl_Event_Details.Incomplete_Survey, tbl_Event_Details.SNPL_Adults,"
+                          f" tbl_Event_Details.SNPL_Hatchlings, tbl_Event_Details.SNPL_Fledglings,"
+                          f" tbl_Event_Details.SNPL_Checked_Bands, tbl_Event_Details.SNPL_Banded,"
+                          f" tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS RecTable,"
+                          f" 'Event_ID' AS RecField, tbl_Event_Details.Event_ID AS RecValue"
+                          f" FROM qsel_QA_Control LEFT JOIN tbl_Event_Details ON qsel_QA_Control.Event_ID ="
+                          f" tbl_Event_Details.Event_ID WHERE (((tbl_Event_Details.Incomplete_Survey)=False) AND"
+                          f" ((tbl_Event_Details.SNPL_Adults) Is Null)) OR (((tbl_Event_Details.Incomplete_Survey)=False)"
+                          f" AND ((tbl_Event_Details.SNPL_Hatchlings) Is Null)) OR (((tbl_Event_Details.Incomplete_Survey)="
+                          f"False) AND ((tbl_Event_Details.SNPL_Fledglings) Is Null)) OR"
+                          f" (((tbl_Event_Details.Incomplete_Survey)=False) AND ((tbl_Event_Details.SNPL_Checked_Bands) Is"
+                          f" Null)) OR (((tbl_Event_Details.Incomplete_Survey)=False) AND ((tbl_Event_Details.SNPL_Banded)"
+                          f" Is Null)) ORDER BY qsel_QA_Control.Start_Date DESC;")
+
+            # Define the flag fields in the 'tbl_Event_Details' table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

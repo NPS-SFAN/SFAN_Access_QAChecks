@@ -9,6 +9,10 @@ import traceback
 import pyodbc
 import pandas as pd
 import win32com.client
+import logging
+import log_config
+
+logger = logging.getLogger(__name__)
 
 class generalDMClass:
 
@@ -348,6 +352,15 @@ class generalDMClass:
         # Get the query definition
         query_def = db.QueryDefs(queryName_LU)
 
+        #Check that queryDescript_LU is less then 255 characters
+        lenQueryDescription = len(queryDecrip_LU)
+        if lenQueryDescription >255:
+            logMsg = (f'WARNING Query Description length is - {lenQueryDescription} - must be less than 255 - existing'
+                      f' script')
+            print(logMsg)
+            logging.error(logMsg, exc_info=True)
+            exit()
+
         # Add the description property if it doesn't exist, or update it if it does
         try:
             query_def.Properties("Description").Value = queryDecrip_LU
@@ -458,3 +471,6 @@ class generalDMClass:
         cnxn.close()
 
         print(f'Created Temp Table - {tableName}')
+
+    if __name__ == "__name__":
+        logger.info("generalDM.py")

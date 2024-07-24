@@ -185,7 +185,7 @@ class generalDMClass:
 
         outDFQueries = generalDMClass.connect_to_AcessDB_DF(inQuery, inDBPath)
 
-        if len(queryName)> 0:
+        if len(queryName) > 0:
             query_exists = True
         else:
             query_exists = False
@@ -292,7 +292,10 @@ class generalDMClass:
         try:
             cursor.execute(fullQuery)
             cnxn.commit()
-            print(f"Query '{queryName}' has been created in the database.")
+            logMsg = f"Query '{queryName}' has been created in the database."
+            print(logMsg)
+            logging.info(logMsg, exc_info=True)
+
         except Exception as e:
             print(f"Error: {e}")
 

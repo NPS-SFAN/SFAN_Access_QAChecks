@@ -84,8 +84,7 @@ class qcChecks:
                     print('Test')
 
                 else:
-                    logMsg = (f'WARNING - {qcCheckInstance.protocol} - is not defined - method QC_Checks.process_QCRequest '
-                              f'- Exiting script')
+                    logMsg = f"WARNING - {qcCheckInstance.protocol} - Exiting script"
                     dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
                     logging.warning(logMsg)
                     exit()
@@ -134,9 +133,10 @@ class qcChecks:
         dm.generalDMClass.queryExistsDelete(queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         # Push the new query
-        dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
+        #PYWIN 32 is much slower using ODBC
+        #dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
         #Not Using ODBC connect this requires ODBC Driver to be in place, using PYWIN32 instead.
-        ####dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
+        dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'
         dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)

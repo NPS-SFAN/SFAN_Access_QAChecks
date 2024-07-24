@@ -127,6 +127,11 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers":
+                outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
 
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
@@ -527,6 +532,86 @@ class qcProtcol_SNPLPORE:
             traceback.print_exc(file=sys.stdout)
             exit()
 
+    def qa_j112_Mismatched_SNPL_Numbers(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j112_Mismatched_SNPL_Numbers. Returns records where the entered
+        summarized number of adults, hatchlings, or fledglings SNPL does not match the observed sum of adult
+        (Male+Female+Unk), hatchlings, or fledglings. QC default value is NSPLE.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #Ceate the Summary of SNPL for all events
+            queryName_LU = 'qasub_j112_Mismatched_SNPL_Numbers'
+
+            inQuery = (f"SELECT tbl_SNPL_Observations.Event_ID, Sum(IIf(ISNULL([SNPL_Male]), 0, [SNPL_Male]) + "
+                       f"IIf(ISNULL([SNPL_Female]), 0, [SNPL_Female]) + IIf(ISNULL([SNPL_Unk]), 0, [SNPL_Unk])) AS "
+                       f"Total_Adults, Sum(IIf(ISNULL([SNPL_Hatchlings]), 0, [SNPL_Hatchlings])) AS Total_Hatch, "
+                       f"Sum(IIf(ISNULL([SNPL_Fledglings]), 0, [SNPL_Fledglings])) AS Total_Fledge, "
+                       f"Sum(IIf(ISNULL([SNPL_Bands]), 0, [SNPL_Bands])) AS Total_Bands "
+                       f"FROM tbl_SNPL_Observations GROUP BY tbl_SNPL_Observations.Event_ID;")
+
+            # Check if query exists first - if yes delete
+            dm.generalDMClass.queryExistsDelete(queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            # Push query to Database
+            dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            #############
+            # Final Query
+            queryName_LU = 'qa_j112_Mismatched_SNPL_Numbers2'
+            # Remove NZ usage in the visual basic based query when reading back into Python via 'pd.read_sql' in method
+            # connect_to_AcessDB_DF not able to create the output dataframe
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Loc_Name,  tbl_Event_Details.QCFlag AS "
+                          f"EventDetailsQCFlag, tbl_Event_Details.QCNotes AS EventDetailsQCNotes, "
+                          f"qsel_QA_Control.Start_Date, "
+                          f" tbl_Event_Details.SNPL_Adults, IIf(IIf(ISNULL([Total_Adults]), 0, [Total_Adults]) = "
+                          f"IIf(ISNULL([SNPL_Adults]), 0, [SNPL_Adults]), '', 'Adults ') & IIf(IIf(ISNULL([Total_Hatch])"
+                          f", 0, [Total_Hatch]) = IIf(ISNULL([SNPL_Hatchlings]), 0, [SNPL_Hatchlings]), '', "
+                          f"'Hatchlings ')"
+                          f" & IIf(IIf(ISNULL([Total_Fledge]), 0, [Total_Fledge]) = IIf(ISNULL([SNPL_Fledglings]), 0, "
+                          f"[SNPL_Fledglings]), '', 'Fledglings ') AS Error, "
+                          f"qasub_j112_Mismatched_SNPL_Numbers.Total_Adults, "
+                          f"qasub_j112_Mismatched_SNPL_Numbers.Total_Adults AS Calc_Adults, "
+                          f"tbl_Event_Details.SNPL_Hatchlings, "
+                          f"qasub_j112_Mismatched_SNPL_Numbers.Total_Hatch AS Calc_Hatch, "
+                          f"tbl_Event_Details.SNPL_Fledglings, "
+                          f"qasub_j112_Mismatched_SNPL_Numbers.Total_Fledge AS Calc_Fledge, 'frm_Data_Entry' AS "
+                          f"varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField, "
+                          f"tbl_Events.Event_ID AS RecValue "
+                          f"FROM (qsel_QA_Control INNER JOIN qasub_j112_Mismatched_SNPL_Numbers ON "
+                          f"qsel_QA_Control.Event_ID = qasub_j112_Mismatched_SNPL_Numbers.Event_ID) INNER JOIN "
+                          f"tbl_Event_Details ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID WHERE NOT "
+                          f"((IIf(ISNULL([Total_Adults]), 0, [Total_Adults]) = IIf(ISNULL([SNPL_Adults]), 0, "
+                          f"[SNPL_Adults])) AND (IIf(ISNULL([Total_Hatch]), 0, [Total_Hatch]) = "
+                          f"IIf(ISNULL([SNPL_Hatchlings]), 0, [SNPL_Hatchlings])) AND (IIf(ISNULL([Total_Fledge]), 0, "
+                          f"[Total_Fledge]) = IIf(ISNULL([SNPL_Fledglings]), 0, [SNPL_Fledglings]))) "
+                          f"ORDER BY qsel_QA_Control.Start_Date;")
+            
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

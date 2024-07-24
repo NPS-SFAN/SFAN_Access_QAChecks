@@ -62,7 +62,7 @@ def main():
         print(qcCheckInstance.__dict__)
 
         # Logfile will be saved in the workspace directory which is child of the fileDir - this is in addition to the
-        # logger file in 'log_config.py'
+        # logger file 'ScriptProcessingError.log being created by the 'logger' configuration file via python.
 
         logFile = dm.generalDMClass.createLogFile(logFilePrefix=outName, workspaceParent=outDir)
 

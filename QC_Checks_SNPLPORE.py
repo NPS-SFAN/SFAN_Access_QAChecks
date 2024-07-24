@@ -111,13 +111,19 @@ class qcProtcol_SNPLPORE:
 
             elif queryName_LU == "qa_f152_StopTime_MoreThanEvent":
                 outFun = qcProtcol_SNPLPORE.qa_f152_StopTime_MoreThanEvent(queryDecrip_LU, yearlyRecDF,
-                                                                              qcCheckInstance, dmInstance)
+                                                                           qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
             elif queryName_LU == "qa_h102_Missing_Observers":
                 outFun = qcProtcol_SNPLPORE.qa_h102_Missing_Observers(queryDecrip_LU, yearlyRecDF,
-                                                                              qcCheckInstance, dmInstance)
+                                                                      qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_j102_SNPL_ObservationTime_Error":
+                outFun = qcProtcol_SNPLPORE.qa_j102_SNPL_ObservationTime_Error(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
@@ -224,7 +230,7 @@ class qcProtcol_SNPLPORE:
                           f"EventDetailsQCNotes, tbl_Event_Details.Incomplete_Survey, tbl_Event_Details.Wind_Spd, "
                           f"tbl_Event_Details.Wind_Max, tbl_Event_Details.Wind_Dir, tbl_Event_Details.Air_Temp, "
                           f"tbl_Event_Details.Rel_Hum, tbl_Event_Details.Cloud_Cover, tbl_Event_Details.Event_Notes, "
-                          f"'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS RecTable, 'Event_ID' AS RecField,"
+                          f"'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField,"
                           f" tbl_Event_Details.Event_ID AS RecValue FROM qsel_QA_Control LEFT JOIN tbl_Event_Details ON"
                           f" qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID WHERE"
                           f" (((tbl_Event_Details.Incomplete_Survey)=False) AND ((tbl_Event_Details.Wind_Spd) Is Null))"
@@ -275,7 +281,7 @@ class qcProtcol_SNPLPORE:
                           f" EventDetailsQCNotes, tbl_Event_Details.Incomplete_Survey, tbl_Event_Details.SNPL_Adults,"
                           f" tbl_Event_Details.SNPL_Hatchlings, tbl_Event_Details.SNPL_Fledglings,"
                           f" tbl_Event_Details.SNPL_Checked_Bands, tbl_Event_Details.SNPL_Banded,"
-                          f" tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS RecTable,"
+                          f" tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable,"
                           f" 'Event_ID' AS RecField, tbl_Event_Details.Event_ID AS RecValue"
                           f" FROM qsel_QA_Control LEFT JOIN tbl_Event_Details ON qsel_QA_Control.Event_ID ="
                           f" tbl_Event_Details.Event_ID WHERE (((tbl_Event_Details.Incomplete_Survey)=False) AND"
@@ -326,7 +332,7 @@ class qcProtcol_SNPLPORE:
                           f" EventDetailsQCNotes, tbl_Event_Details.SNPL_Adults, tbl_Event_Details.SNPL_Hatchlings,"
                           f" tbl_Event_Details.SNPL_Fledglings, [SNPL_Adults]+[SNPL_Hatchlings]+[SNPL_Fledglings] AS"
                           f" TotalSNPL, tbl_Event_Details.SNPL_Checked_Bands, tbl_Event_Details.SNPL_Banded,"
-                          f" tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS"
+                          f" tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS varObject, 'tbl_Events' AS"
                           f" RecTable, 'Event_ID' AS RecField, tbl_Event_Details.Event_ID AS RecValue"
                           f" FROM qsel_QA_Control INNER JOIN tbl_Event_Details ON qsel_QA_Control.Event_ID ="
                           f" tbl_Event_Details.Event_ID WHERE ((([SNPL_Adults]+[SNPL_Hatchlings]+[SNPL_Fledglings])<"
@@ -370,7 +376,7 @@ class qcProtcol_SNPLPORE:
                           f" EventDetailsQCNotes, tbl_Event_Details.SNPL_Adults, tbl_Event_Details.SNPL_Hatchlings,"
                           f" tbl_Event_Details.SNPL_Fledglings, tbl_Event_Details.SNPL_Checked_Bands,"
                           f" tbl_Event_Details.SNPL_Banded, tbl_Event_Details.Event_Notes, 'frm_Data_Entry' AS"
-                          f" varObject, 'tbl_Event_Details' AS RecTable, 'Event_ID' AS RecField,"
+                          f" varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField,"
                           f" tbl_Event_Details.Event_ID AS RecValue FROM qsel_QA_Control INNER JOIN tbl_Event_Details"
                           f" ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID WHERE"
                           f" (((tbl_Event_Details.SNPL_Banded)>[SNPL_Checked_Bands])) ORDER BY"
@@ -415,7 +421,7 @@ class qcProtcol_SNPLPORE:
                           f"EventDetailsQCNotes, tbl_Event_Details.Predtor_Survey, tbl_Event_Details.Predator_Notes, "
                           f"tbl_Event_Details.PredatorStop, tbl_Event_Details.Event_Notes, DateDiff('n',[Start_Time],"
                           f"[End_Time]) AS SurveyMinutes, qsel_QA_Control.Start_Time, qsel_QA_Control.End_Time, "
-                          f"'frm_Data_Entry' AS varObject, 'tbl_Event_Details' AS RecTable, 'Event_ID' AS RecField, "
+                          f"'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField, "
                           f"tbl_Event_Details.Event_ID AS RecValue FROM qsel_QA_Control INNER JOIN tbl_Event_Details "
                           f"ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID "
                           f"WHERE (((DateDiff('n',[Start_Time],[End_Time]))<[PredatorStop])) ORDER BY "
@@ -456,7 +462,7 @@ class qcProtcol_SNPLPORE:
 
             inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Start_Date, qsel_QA_Control.Loc_Name, "
                           f"qsel_QA_Control.QCFlag AS EventQCFlag, qsel_QA_Control.QCNotes AS EventQCNotes, "
-                          f"xref_Event_Contacts.Contact_ID, 'frm_Data_Entry' AS varObject, 'tbl_Event_Details' "
+                          f"xref_Event_Contacts.Contact_ID, 'frm_Data_Entry' AS varObject, 'tbl_Events' "
                           f"AS RecTable, 'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue "
                           f"FROM qsel_QA_Control LEFT JOIN xref_Event_Contacts ON qsel_QA_Control.Event_ID = "
                           f"xref_Event_Contacts.Event_ID WHERE (((xref_Event_Contacts.Contact_ID) Is Null));")
@@ -475,6 +481,52 @@ class qcProtcol_SNPLPORE:
             logging.error(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
             exit()
+
+    def qa_j102_SNPL_ObservationTime_Error(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j102_SNPL_ObservationTime_Error. Returns SNPL observation records where
+        the observation time is outside the start or end times of survey event. Time should be entered in 24 hour
+        military format. QC default value is LEOT.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+            # Single Query Check
+            queryName_LU = 'qa_j102_SNPL_ObservationTime_Error'
+
+            inQuerySel = (f"SELECT  tbl_SNPL_Observations.SNPL_Data_ID, qsel_QA_Control.Event_ID, "
+                          f"qsel_QA_Control.Loc_Name, tbl_SNPL_Observations.QCFlag AS "
+                          f"SNPLObsQCFlag, tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qsel_QA_Control.Start_Date, "
+                          f"qsel_QA_Control.Start_Time, qsel_QA_Control.End_Time, tbl_SNPL_Observations.SNPL_Time, "
+                          f"'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField, "
+                          f"tbl_Events.Event_ID AS RecValue FROM qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON "
+                          f"qsel_QA_Control.Event_ID = tbl_SNPL_Observations.Event_ID "
+                          f"WHERE (((tbl_SNPL_Observations.SNPL_Time)<[Start_Time] Or "
+                          f"(tbl_SNPL_Observations.SNPL_Time)>[End_Time])) ORDER BY qsel_QA_Control.Start_Date DESC;")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

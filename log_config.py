@@ -8,7 +8,7 @@ def setup_logging():
     # Configure logging
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s',
-                        filename='app.log',  # Log to a file
+                        filename='ScriptProcessingError.log',  # Log to a file
                         filemode='a')        # Append to the log file
 
 # Call the setup function to configure logging

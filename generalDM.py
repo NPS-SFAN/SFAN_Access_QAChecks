@@ -164,9 +164,46 @@ class generalDMClass:
 
         try:
             queryDf = pd.read_sql(query, cnxn)
+
+
         except Exception as e:
-            print(f"Error in 'connect_to_AccessDB_DF' for - {query} - {e}")
+
+            # Check if 'queryDf' imported try and import via ODBC cursor
+            if 'queryDf' in locals() or 'queryDf' in globals():
+                print("Variable 'queryDf' exists - imported via read_sql")
+            else:
+                print("Variable 'queryDf' does not exist - try and import query via pyodbc cursor")
+                cursor = cnxn.cursor()
+
+                # Execute the query
+                cursor.execute(query)
+
+                # Fetch all rows from the query
+                rows = cursor.fetchall()
+
+                # Fetch the column names from the cursor description
+                columns = [column[0] for column in cursor.description]
+
+                # Create a DataFrame from the fetched rows and column names
+                queryDf = pd.DataFrame.from_records(rows, columns=columns)
+                cursor.close()
+                logMsg = "Import query - {query} via PYODBC - Cursor rather then pd.read_sql"
+                logging.info(logMsg, exc_info=True)
+
+
+
+
+
+
+
+
+
+
+            print(f"WARNING Error in 'connect_to_AccessDB_DF' for - {query} - {e}")
+            logging.critical(logMsg, exc_info=True)
             exit()
+
+
 
         finally:
             cnxn.close()

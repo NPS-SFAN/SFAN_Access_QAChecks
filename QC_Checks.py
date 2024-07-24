@@ -135,7 +135,7 @@ class qcChecks:
         # Push the new query
         #PYWIN 32 is much slower using ODBC
         #dm.generalDMClass.pushQuery(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
-        #Not Using ODBC connect this requires ODBC Driver to be in place, using PYWIN32 instead.
+        #Using ODBC connect this requires ODBC Driver to be in place, if not use PYWIN32.
         dm.generalDMClass.pushQueryODBC(inQuerySel=inQuerySel, queryName=queryName, inDBPath=qcCheckInstance.inDBFE)
 
         logMsg = f'Successfully pushed Query - {queryName} - to Front End Database - {qcCheckInstance.inDBFE}'

@@ -137,7 +137,17 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_j132_NestID_Year_Mismatch":
+                outFun = qcProtcol_SNPLPORE.qa_j132_NestID_Year_Mismatch(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_j142_Missing_Band_Totals":
+                outFun = qcProtcol_SNPLPORE.qa_j142_Missing_Band_Totals(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
 
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
@@ -688,6 +698,104 @@ class qcProtcol_SNPLPORE:
             traceback.print_exc(file=sys.stdout)
             exit()
 
+    def qa_j132_NestID_Year_Mismatch(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j132_NestID_Year_Mismatch. Returns records from SNPL_Obsevations where
+        the survey year of the nest ID used does not match that in tblNestMaster. QC default value is OEYDNM.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #############
+            # Final Query
+            queryName_LU = 'qa_j132_NestID_Year_Mismatch'
+            # Remove NZ usage in the visual basic based query when reading back into Python via 'pd.read_sql' in method
+            # connect_to_AcessDB_DF not able to create the output dataframe
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, tbl_SNPL_Observations.SNPL_Data_ID, "
+                          f"tbl_Nest_Master.Nest_ID, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
+                          f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, Year([Start_Date]) AS ObsYear, "
+                          f"tbl_Nest_Master.Year AS NestYear, 'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, "
+                          f"'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue FROM tbl_Nest_Master INNER "
+                          f"JOIN (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON qsel_QA_Control.Event_ID = "
+                          f"tbl_SNPL_Observations.Event_ID) ON tbl_Nest_Master.Nest_ID = tbl_SNPL_Observations.Nest_ID "
+                          f"WHERE (((Year([Start_Date]))<>[tbl_Nest_Master].[Year]));")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+    def qa_j142_Missing_Band_Totals (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j142_Missing_Band_Totals. Returns records where there is data in
+        tblSNPLBanded for a specific observation time, but the SNPL_Bands field in tblSNPLObservations is blank or 0.
+        QC default value is  ONBLE.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #############
+            # Final Query
+            queryName_LU = 'qa_j142_Missing_Band_Totals'
+            # Remove NZ usage in the visual basic based query when reading back into Python via 'pd.read_sql' in method
+            # connect_to_AcessDB_DF not able to create the output dataframe
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, tbl_SNPL_Observations.SNPL_Data_ID, "
+                           f"qsel_QA_Control.Loc_Name, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
+                           f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qsel_QA_Control.Start_Date, "
+                           f"tbl_SNPL_Observations.Nest_ID, tbl_SNPL_Observations.SNPL_Time, "
+                           f"tbl_SNPL_Observations.SNPL_Bands, tbl_SNPL_Banded.Left_Leg, "
+                           f"tbl_SNPL_Banded.Right_Leg, tbl_SNPL_Banded.Band_Notes, 'frm_Data_Entry' AS varObject, "
+                           f"'tbl_Events' AS RecTable, 'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue "
+                           f"FROM (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON qsel_QA_Control.Event_ID = "
+                           f"tbl_SNPL_Observations.Event_ID) INNER JOIN tbl_SNPL_Banded ON "
+                           f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID "
+                           f"WHERE (((tbl_SNPL_Observations.SNPL_Bands) Is Null Or "
+                           f"(tbl_SNPL_Observations.SNPL_Bands)=0)) ORDER BY qsel_QA_Control.Start_Date;")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

@@ -149,6 +149,12 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_j152_Missing_Band_Data":
+                outFun = qcProtcol_SNPLPORE.qa_j152_Missing_Band_Data(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
@@ -781,6 +787,60 @@ class qcProtcol_SNPLPORE:
                            f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID "
                            f"WHERE (((tbl_SNPL_Observations.SNPL_Bands) Is Null Or "
                            f"(tbl_SNPL_Observations.SNPL_Bands)=0)) ORDER BY qsel_QA_Control.Start_Date;")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+    def qa_j152_Missing_Band_Data (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j152_Missing_Band_Data. Returns records where there are no records in
+        tblSNPLBanded, but where the SNPL_Bands field in tblSNPLObservations is greater than 0. QC default value is
+        SNBO.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #############
+            # Final Query
+            queryName_LU = 'qa_j152_Missing_Band_Data'
+            # Remove NZ usage in the visual basic based query when reading back into Python via 'pd.read_sql' in method
+            # connect_to_AcessDB_DF not able to create the output dataframe
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, tbl_SNPL_Observations.SNPL_Data_ID, "
+                          f"qsel_QA_Control.Loc_Name, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
+                          f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qsel_QA_Control.Start_Date, "
+                          f"tbl_SNPL_Observations.Nest_ID, tbl_SNPL_Observations.SNPL_Time, "
+                          f"tbl_SNPL_Observations.SNPL_Bands AS [Count SNPL Observations], "
+                          f"tbl_SNPL_Banded.SNPL_Data_ID AS [SNPL Banded Is Null], tbl_SNPL_Banded.Left_Leg, "
+                          f"tbl_SNPL_Banded.Right_Leg, tbl_SNPL_Banded.Band_Notes, 'frm_Data_Entry' AS varObject, "
+                          f"'tbl_Events' AS RecTable, 'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue "
+                          f"FROM (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON qsel_QA_Control.Event_ID = "
+                          f"tbl_SNPL_Observations.Event_ID) LEFT JOIN tbl_SNPL_Banded ON "
+                          f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID "
+                          f"WHERE (((tbl_SNPL_Observations.SNPL_Bands) Is Not Null And "
+                          f"(tbl_SNPL_Observations.SNPL_Bands)>0) AND ((tbl_SNPL_Banded.SNPL_Data_ID) Is Null)) "
+                          f"ORDER BY qsel_QA_Control.Start_Date DESC;")
 
             # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
             # applied

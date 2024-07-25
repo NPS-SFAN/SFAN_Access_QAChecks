@@ -803,7 +803,7 @@ class qcProtcol_SNPLPORE:
             traceback.print_exc(file=sys.stdout)
             exit()
 
-    def qa_j152_Missing_Band_Data (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+    def qa_j152_Missing_Band_Data(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
         Query routine for validation check - qa_j152_Missing_Band_Data. Returns records where there are no records in
         tblSNPLBanded, but where the SNPL_Bands field in tblSNPLObservations is greater than 0. QC default value is
@@ -841,6 +841,75 @@ class qcProtcol_SNPLPORE:
                           f"WHERE (((tbl_SNPL_Observations.SNPL_Bands) Is Not Null And "
                           f"(tbl_SNPL_Observations.SNPL_Bands)>0) AND ((tbl_SNPL_Banded.SNPL_Data_ID) Is Null)) "
                           f"ORDER BY qsel_QA_Control.Start_Date DESC;")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+    def qa_j162_Mismatched_Band_Obs (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j162_Mismatched_Band_Obs.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #Run initial setup Summary and export to a temp table to facilitate QC Flag Update
+
+            queryName_LU = 'qasub_j162_Mismatched_Band_Obs'
+
+            inQuery = (f"SELECT tbl_SNPL_Observations.Event_ID, tbl_SNPL_Observations.SNPL_Data_ID, "
+                       f"qsel_QA_Control.Loc_Name, qsel_QA_Control.Start_Date, tbl_SNPL_Observations.SNPL_Time, "
+                       f"tbl_SNPL_Observations.Nest_ID, tbl_SNPL_Observations.SNPL_Bands, "
+                       f"Count(tbl_SNPL_Banded.SNPL_Band_ID) AS CountSNPBanded, 'frm_Data_Entry' AS varObject "
+                       f"INTO qryTbl_qaSub_j162 FROM (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON "
+                       f"qsel_QA_Control.Event_ID = "
+                       f"tbl_SNPL_Observations.Event_ID) INNER JOIN tbl_SNPL_Banded ON "
+                       f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID GROUP BY "
+                       f"tbl_SNPL_Observations.Event_ID, tbl_SNPL_Observations.SNPL_Data_ID, qsel_QA_Control.Loc_Name, "
+                       f"qsel_QA_Control.Start_Date, tbl_SNPL_Observations.SNPL_Time, tbl_SNPL_Observations.Nest_ID, "
+                       f"tbl_SNPL_Observations.SNPL_Bands, qsel_QA_Control.Event_ID HAVING "
+                       f"(((Count(tbl_SNPL_Banded.SNPL_Band_ID))<>[SNPL_Bands])) ORDER BY qsel_QA_Control.Loc_Name, "
+                       f"qsel_QA_Control.Start_Date, tbl_SNPL_Observations.SNPL_Time;")
+
+            # Delete Temp Table (tmpQCTable) if Exists
+            dm.generalDMClass.tableExistsDelete(tableName='qryTbl_qaSub_j162', inDBPath=qcCheckInstance.inDBBE)
+
+            # Need to Run Query to Create the tmp table - TO BE DEVELOPED KRS - 7/25/2024
+            dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            #####################
+            # Final Query hitting setup qryTempTable - qryTbl_qasub_j162
+            #####################
+            queryName_LU = 'qa_j162_Mismatched_Band_Obs'
+
+            inQuerySel = (f"SELECT qryTbl_qasub_j162.Event_ID, qryTbl_qasub_j162.SNPL_Data_ID, "
+                          f"qryTbl_qasub_j162.Loc_Name, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
+                          f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qryTbl_qasub_j162.Start_Date, "
+                          f"qryTbl_qasub_j162.SNPL_Time, qryTbl_qasub_j162.Nest_ID, qryTbl_qasub_j162.SNPL_Bands, "
+                          f"qryTbl_qasub_j162.CountSNPBanded, qryTbl_qasub_j162.varObject, 'tbl_Events' AS RecTable, "
+                          f"'Event_ID' AS RecField, tbl_SNPL_Observations.Event_ID AS RecValue "
+                          f"FROM qryTbl_qasub_j162 INNER JOIN tbl_SNPL_Observations ON qryTbl_qasub_j162.SNPL_Data_ID "
+                          f"= tbl_SNPL_Observations.SNPL_Data_ID;")
 
             # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
             # applied

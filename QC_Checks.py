@@ -236,37 +236,52 @@ class qcChecks:
             inQuery = f"SELECT * FROM tbl_QCQueries WHERE [QueryName] = '{queryName_LU}';"
             inDBFE = qcCheckInstance.inDBFE
             outDFQCFields = dm.generalDMClass.connect_to_AcessDB_DF(query=inQuery, inDB=inDBFE)
-            #Get Flag Code to Apply
-            qcFlag_LU = outDFQCFields.loc[0, 'QCFlag']
-            #Get Flag Field in Source Table - QC Flag will be applied here
-            qcFlagFieldTable_LU = outDFQCFields.loc[0, 'FlagFieldTable']
-            #Get Flag Field in the Summary Query (i.e. field in the 'queryName_LU'), will be checking this field
-            #to see if the QC Flag is present
-            qcFlagFieldQuery_LU = outDFQCFields.loc[0, 'FlagFieldQuery']
 
+            # Pull Information from the defined flagging fields in the QC_Results table
+            # Get Flag Code to Apply
+            qcFlag_LU = outDFQCFields.loc[0, 'QCFlag']
+            # Get Flag Field in Source Table - QC Flag will be applied here
+            qcFlagFieldTable_LU = outDFQCFields.loc[0, 'FlagFieldTable']
+            qcFlagFieldQuery_LU = outDFQCFields.loc[0, 'FlagFieldQuery']
+            flagTable_LU = outDFQCFields.loc[0, 'FlagTable']
+            joinField_LU = outDFQCFields.loc[0, 'JoinField']
+
+
+            # Get Flag Field in the Summary Query (i.e. field in the 'queryName_LU'), will be checking this field
+            # to see if the QC Flag is present
             inQuerySel = f"SELECT * FROM {queryName_LU}"
             # 1b) Read in the Final Query
             outDFwRecs = dm.generalDMClass.connect_to_AcessDB_DF(query=inQuerySel, inDB=inDBFE)
 
-            # 2) Apply the QC Flag where 'DFO' doesn't exists
+            # 2) Apply the QC Flag where 'Current Flag' doesn't exists
             outDFNoFlag = outDFwRecs[~outDFwRecs[qcFlagFieldQuery_LU].str.contains(qcFlag_LU, na=False)]
-            recToFlag = len(outDFNoFlag)
+            recToFlag = len(outDFNoFlag)  #If a one-to-many relationship this might not be accuracte count
+
+            # Get the unique/distinct values without flags for the records without the flag.  Due to one to many
+            # only going to push the temp table with the unique value to avoid applying the flag more than once
+            # when a one to many relationship exists
+
+            # Get the unique values in the 'joinField_LU' identifier for the records without the flag
+            outDFNoFlagUnique = outDFNoFlag[joinField_LU].unique()
+            # Convert the NumPy array to a DataFrame - this will be pushed to the tmpTable in the backend.
+            outDFNoFlagUniqueDF = pd.DataFrame(outDFNoFlagUnique, columns=[joinField_LU])
+
             #Delete Temp Table (if exists) and apply the QC Flag if number of records >0, else no new flagging requried.
             if len(outDFNoFlag) > 0:
                 # Delete Temp Table (tmpQCTable) if Exists
                 dm.generalDMClass.tableExistsDelete(tableName= 'tmpQCTable', inDBPath=qcCheckInstance.inDBBE)
 
-                # Create the Temporary Table and Populate with the dataframe records without the records
-                dm.generalDMClass.createTableFromDF(outDFNoFlag, 'tmpQCTable', qcCheckInstance.inDBBE)
+                # Create the Temporary Table and Populate with the dataframe records without the flag, further
+                # subset to only the unique records for the defiened field (i.e. unique ID field).
+                dm.generalDMClass.createTableFromDF(outDFNoFlagUniqueDF, 'tmpQCTable', qcCheckInstance.inDBBE)
 
-                #Define the Update Query no Existing QC Flag (e.g. DFO) for this iteration
-                flagTable_LU = outDFQCFields.loc[0, 'FlagTable']
-                joinField_LU = outDFQCFields.loc[0, 'JoinField']
+                # Define the Update Query no Existing QC Flag (e.g. DFO) for this iteration
 
                 inQuery = (f"UPDATE tmpQCTable INNER JOIN {flagTable_LU} ON tmpQCTable.{joinField_LU} ="
                            f" {flagTable_LU}.{joinField_LU} SET {flagTable_LU}.{qcFlagFieldTable_LU} = IIf(IsNull([{qcFlagFieldTable_LU}])"
                            f",'{qcFlag_LU}',[{qcFlagFieldTable_LU}] & ';{qcFlag_LU}');")
 
+                # Apply the QC Flag
                 # Apply the QC Flag
                 inDBBE = qcCheckInstance.inDBBE
                 dm.generalDMClass.excuteQuery(inQuery=inQuery, inDBBE=inDBBE)

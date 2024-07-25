@@ -101,8 +101,6 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-
-
             elif queryName_LU == "qa_f142_MoreBandedSNPL_ThanChecked":
                 outFun = qcProtcol_SNPLPORE.qa_f142_MoreBandedSNPL_ThanChecked(queryDecrip_LU, yearlyRecDF,
                                                                               qcCheckInstance, dmInstance)
@@ -132,6 +130,14 @@ class qcProtcol_SNPLPORE:
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_j122_Mismatched_Banded_Numbers":
+                outFun = qcProtcol_SNPLPORE.qa_j122_Mismatched_Banded_Numbers(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+
 
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
@@ -612,6 +618,76 @@ class qcProtcol_SNPLPORE:
             logging.error(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
             exit()
+
+    def qa_j122_Mismatched_Banded_Numbers(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j122_Mismatched_Banded_Numbers. Returns records where the number of
+        Banded SNPL recorded entered into the SNPL Banded summary results field is not the same as the tally of Banded
+        observation records for the survey. QC default value is NSBPLE.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            # Ceate the Summary of SNPL for all events
+            queryName_LU = 'qasub_j112_Mismatched_SNPL_Numbers'
+
+            inQuery = (f"SELECT tbl_SNPL_Observations.Event_ID, Sum(IIf(ISNULL([SNPL_Male]), 0, [SNPL_Male]) + "
+                       f"IIf(ISNULL([SNPL_Female]), 0, [SNPL_Female]) + IIf(ISNULL([SNPL_Unk]), 0, [SNPL_Unk])) AS "
+                       f"Total_Adults, Sum(IIf(ISNULL([SNPL_Hatchlings]), 0, [SNPL_Hatchlings])) AS Total_Hatch, "
+                       f"Sum(IIf(ISNULL([SNPL_Fledglings]), 0, [SNPL_Fledglings])) AS Total_Fledge, "
+                       f"Sum(IIf(ISNULL([SNPL_Bands]), 0, [SNPL_Bands])) AS Total_Bands "
+                       f"FROM tbl_SNPL_Observations GROUP BY tbl_SNPL_Observations.Event_ID;")
+
+            # Check if query exists first - if yes delete
+            dm.generalDMClass.queryExistsDelete(queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            # Push query to Database
+            dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU,
+                                            inDBPath=qcCheckInstance.inDBFE)
+
+            #############
+            # Final Query
+            queryName_LU = 'qa_j122_Mismatched_Banded_Numbers'
+            # Remove NZ usage in the visual basic based query when reading back into Python via 'pd.read_sql' in method
+            # connect_to_AcessDB_DF not able to create the output dataframe
+
+            inQuerySel = (f"SELECT qsel_QA_Control.Event_ID, qsel_QA_Control.Loc_Name, tbl_Event_Details.QCFlag AS "
+                          f"EventDetailsQCFlag, tbl_Event_Details.QCNotes AS EventDetailsQCNotes, "
+                          f"qsel_QA_Control.Start_Date, tbl_Event_Details.SNPL_Banded, "
+                          f"qasub_j112_Mismatched_SNPL_Numbers.Total_Bands AS Calc_Banded, 'frm_Data_Entry' AS "
+                          f"varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField, tbl_Events.Event_ID AS "
+                          f"RecValue FROM (qsel_QA_Control INNER JOIN qasub_j112_Mismatched_SNPL_Numbers ON "
+                          f"qsel_QA_Control.Event_ID = qasub_j112_Mismatched_SNPL_Numbers.Event_ID) INNER JOIN "
+                          f"tbl_Event_Details ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID WHERE "
+                          f"(((qasub_j112_Mismatched_SNPL_Numbers.Total_Bands)>IIf([tbl_Event_Details].[SNPL_Banded] Is "
+                          f"Null,0,[tbl_Event_Details].[SNPL_Banded]) Or "
+                          f"(qasub_j112_Mismatched_SNPL_Numbers.Total_Bands)<IIf([tbl_Event_Details].[SNPL_Banded] Is "
+                          f"Null,0,[tbl_Event_Details].[SNPL_Banded]))) ORDER BY qsel_QA_Control.Start_Date")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

@@ -155,6 +155,24 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+            elif queryName_LU == "qa_j162_Mismatched_Band_Obs":
+                outFun = qcProtcol_SNPLPORE.qa_j162_Mismatched_Band_Obs(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_j172_Mismatched_Band_Summary":
+                outFun = qcProtcol_SNPLPORE.qa_j172_Mismatched_Band_Summary(queryDecrip_LU, yearlyRecDF,
+                                                                               qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_j182_Predator_ActivityType":
+                outFun = qcProtcol_SNPLPORE.qa_j182_Predator_ActivityType(queryDecrip_LU, yearlyRecDF,
+                                                                            qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
@@ -859,7 +877,9 @@ class qcProtcol_SNPLPORE:
 
     def qa_j162_Mismatched_Band_Obs (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
-        Query routine for validation check - qa_j162_Mismatched_Band_Obs.
+        Query routine for validation check - qa_j162_Mismatched_Band_Obs. Returns records where there where the
+        SNPL_Bands field in tblSNPLObservations does not match the number of records in tbl_SNPLBanded for the survey
+        data and time. QC default value is ONBM.
 
         :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
         :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
@@ -881,7 +901,7 @@ class qcProtcol_SNPLPORE:
                        f"qsel_QA_Control.Loc_Name, qsel_QA_Control.Start_Date, tbl_SNPL_Observations.SNPL_Time, "
                        f"tbl_SNPL_Observations.Nest_ID, tbl_SNPL_Observations.SNPL_Bands, "
                        f"Count(tbl_SNPL_Banded.SNPL_Band_ID) AS CountSNPBanded, 'frm_Data_Entry' AS varObject "
-                       f"INTO qryTbl_qaSub_j162 FROM (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON "
+                       f"FROM (qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON "
                        f"qsel_QA_Control.Event_ID = "
                        f"tbl_SNPL_Observations.Event_ID) INNER JOIN tbl_SNPL_Banded ON "
                        f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID GROUP BY "
@@ -891,24 +911,29 @@ class qcProtcol_SNPLPORE:
                        f"(((Count(tbl_SNPL_Banded.SNPL_Band_ID))<>[SNPL_Bands])) ORDER BY qsel_QA_Control.Loc_Name, "
                        f"qsel_QA_Control.Start_Date, tbl_SNPL_Observations.SNPL_Time;")
 
-            # Delete Temp Table (tmpQCTable) if Exists
-            dm.generalDMClass.tableExistsDelete(tableName='qryTbl_qaSub_j162', inDBPath=qcCheckInstance.inDBBE)
+
+            # Check if query exists first - if yes delete
+            dm.generalDMClass.queryExistsDelete(queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
 
             # Need to Run Query to Create the tmp table - TO BE DEVELOPED KRS - 7/25/2024
             dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
 
             #####################
-            # Final Query hitting setup qryTempTable - qryTbl_qasub_j162
+            # Final Query hitting setup query qasub_j162_Mismatched_Band_Obs
             #####################
             queryName_LU = 'qa_j162_Mismatched_Band_Obs'
 
-            inQuerySel = (f"SELECT qryTbl_qasub_j162.Event_ID, qryTbl_qasub_j162.SNPL_Data_ID, "
-                          f"qryTbl_qasub_j162.Loc_Name, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
-                          f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qryTbl_qasub_j162.Start_Date, "
-                          f"qryTbl_qasub_j162.SNPL_Time, qryTbl_qasub_j162.Nest_ID, qryTbl_qasub_j162.SNPL_Bands, "
-                          f"qryTbl_qasub_j162.CountSNPBanded, qryTbl_qasub_j162.varObject, 'tbl_Events' AS RecTable, "
+            inQuerySel = (f"SELECT qasub_j162_Mismatched_Band_Obs.Event_ID, qasub_j162_Mismatched_Band_Obs.SNPL_Data_ID, "
+                          f"qasub_j162_Mismatched_Band_Obs.Loc_Name, tbl_SNPL_Observations.QCFlag AS SNPLObsQCFlag, "
+                          f"tbl_SNPL_Observations.QCNotes AS SNPLObsQCNotes, qasub_j162_Mismatched_Band_Obs.Start_Date, "
+                          f"qasub_j162_Mismatched_Band_Obs.SNPL_Time, qasub_j162_Mismatched_Band_Obs.Nest_ID, "
+                          f"qasub_j162_Mismatched_Band_Obs.SNPL_Bands, "
+                          f"qasub_j162_Mismatched_Band_Obs.CountSNPBanded, qasub_j162_Mismatched_Band_Obs.varObject, "
+                          f"'tbl_Events' AS RecTable, "
                           f"'Event_ID' AS RecField, tbl_SNPL_Observations.Event_ID AS RecValue "
-                          f"FROM qryTbl_qasub_j162 INNER JOIN tbl_SNPL_Observations ON qryTbl_qasub_j162.SNPL_Data_ID "
+                          f"FROM qasub_j162_Mismatched_Band_Obs INNER JOIN tbl_SNPL_Observations ON "
+                          f"qasub_j162_Mismatched_Band_Obs.SNPL_Data_ID "
                           f"= tbl_SNPL_Observations.SNPL_Data_ID;")
 
             # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
@@ -925,6 +950,133 @@ class qcProtcol_SNPLPORE:
             logging.error(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
             exit()
+
+
+    def qa_j172_Mismatched_Band_Summary (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j172_Mismatched_Band_Summary. Returns records where there the number of
+        banded SNPL in the event summary is not the same as the sum of records in tblSNPL_Banded for the survey ESBNA.
+
+
+
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+            #Run initial setup Summary and export to a temp table to facilitate QC Flag Update
+
+            queryName_LU = 'qasub_j172_Mismatched_Band_Summary'
+
+            inQuery = (f"SELECT tbl_SNPL_Observations.Event_ID, tbl_Event_Details.SNPL_Banded, "
+                       f"Count(tbl_SNPL_Observations.Event_ID) AS CountSNPLBanded FROM "
+                       f"((qsel_QA_Control INNER JOIN tbl_SNPL_Observations ON qsel_QA_Control.Event_ID = "
+                       f"tbl_SNPL_Observations.Event_ID) INNER JOIN tbl_SNPL_Banded ON "
+                       f"tbl_SNPL_Observations.SNPL_Data_ID = tbl_SNPL_Banded.SNPL_Data_ID) INNER "
+                       f"JOIN tbl_Event_Details ON qsel_QA_Control.Event_ID = tbl_Event_Details.Event_ID "
+                       f"GROUP BY tbl_SNPL_Observations.Event_ID, tbl_Event_Details.SNPL_Banded;")
+
+            # Check if query exists first - if yes delete
+            dm.generalDMClass.queryExistsDelete(queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
+
+            #####################
+            # Final Query hitting setup query qasub_j172_Mismatched_Band_Summary
+            #####################
+            queryName_LU = 'qa_j172_Mismatched_Band_Summary'
+
+            inQuerySel = (f"SELECT qasub_j172_Mismatched_Band_Summary.Event_ID, qsel_QA_Control.Loc_Name, "
+                          f"tbl_Event_Details.QCFlag AS EventDetailsQCFlag, tbl_Event_Details.QCNotes AS "
+                          f"EventDetailsQCNotes, qsel_QA_Control.Start_Date, "
+                          f"qasub_j172_Mismatched_Band_Summary.SNPL_Banded AS EventDetailsSNPL_Banded, "
+                          f"qasub_j172_Mismatched_Band_Summary.CountSNPLBanded, 'frm_Data_Entry' AS varObject, "
+                          f"'tbl_Events' AS RecTable, 'Event_ID' AS RecField, tbl_Event_Details.Event_ID AS RecValue "
+                          f"FROM (qasub_j172_Mismatched_Band_Summary INNER JOIN qsel_QA_Control ON "
+                          f"qasub_j172_Mismatched_Band_Summary.Event_ID = qsel_QA_Control.Event_ID) INNER JOIN "
+                          f"tbl_Event_Details ON qasub_j172_Mismatched_Band_Summary.Event_ID = "
+                          f"tbl_Event_Details.Event_ID WHERE "
+                          f"(((qasub_j172_Mismatched_Band_Summary.SNPL_Banded)<>[CountSNPLBanded]));")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+
+
+    def qa_j182_Predator_ActivityType (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_j182_Predator_ActivityType. Returns records where the predator survey
+        activity type entered is not one of  the expected values of A, F, S, and W. QC default value is PAVU. Query
+        should be redundant because an Predator Activity Lookup table has been created and assigned to the predator
+        activtiy field in the database with referential integrity inplace.
+
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+
+
+            #####################
+            # Final Query
+            #####################
+            queryName_LU = 'qa_j182_Predator_ActivityType'
+
+            inQuerySel = (f"SELECT tbl_Predator_Survey.Predator_Data_ID, tbl_Events.Event_ID, tbl_Locations.Loc_Name, "
+                          f"tbl_Events.Start_Date, "
+                          f"tbl_Predator_Survey.QCFlag AS PredQCFlag, tbl_Predator_Survey.QCNotes AS PredQCNotes, "
+                          f"tlu_Predator_Type.Description AS Predator, tbl_Predator_Survey.GroupSize, "
+                          f"tbl_Predator_Survey.BinNumber, tbl_Predator_Survey.ACT, tbl_Predator_Survey.Waypoint, "
+                          f"'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable, 'Event_ID' AS RecField, "
+                          f"tbl_Events.Event_ID AS RecValue FROM tlu_Predator_Type INNER JOIN (tbl_Locations INNER JOIN "
+                          f"(tbl_Events INNER JOIN tbl_Predator_Survey ON tbl_Events.Event_ID = "
+                          f"tbl_Predator_Survey.Event_ID) ON tbl_Locations.Location_ID = tbl_Events.Location_ID) ON "
+                          f"tlu_Predator_Type.Predator_Type_ID = tbl_Predator_Survey.Predator_Type_ID WHERE "
+                          f"(((tbl_Predator_Survey.ACT)<>'A' And (tbl_Predator_Survey.ACT)<>'F' And "
+                          f"(tbl_Predator_Survey.ACT)<>'S' And (tbl_Predator_Survey.ACT)<>'W')) ORDER BY "
+                          f"tbl_Events.Start_Date DESC;")
+
+            # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be
+            # applied
+
+            flagFieldsDic = {'ApplyFlag': ['Yes']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
 
     if __name__ == "__name__":
         logger.info("Running QC_Checks_SNPLPORE.py")

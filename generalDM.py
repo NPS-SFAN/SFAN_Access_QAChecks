@@ -191,14 +191,6 @@ class generalDMClass:
                 logging.info(logMsg, exc_info=True)
 
 
-
-
-
-
-
-
-
-
             print(f"WARNING Error in 'connect_to_AccessDB_DF' for - {query} - {e}")
             logging.critical(logMsg, exc_info=True)
             exit()

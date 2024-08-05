@@ -7,7 +7,7 @@ Processing routine uses a combination of pyodbc and pywin32 libraries to connect
 
 Note must be have Access open any where on your compuer when running the script otherwise the script will error out when tyring to open an Access application that is already open.
 
-As of August 5th, 2024 workflow has been defiend for SNPL GOGA annual data validation autoflagging routines.  
+As of August 5th, 2024 workflow has been defined for **SNPL GOGA** annual data validation autoflagging routines.  
 
 
 ## SFAN_AccessQCChecks.py

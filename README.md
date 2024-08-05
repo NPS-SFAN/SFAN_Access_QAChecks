@@ -1,9 +1,18 @@
 # SFAN_Access_QAChecks
 Repository with workflow to perform annual data validation routines within San Francisco Bay Area Network (SFAN) protocol Access Databases.  Performs the SQL based queries from python that are pushed to the protocol Access database.  The Pythhon SQL queries are performing automoated data quality flagging and work in conjunction with exisitng QC data validation front end forms.  Script on Object Oriented in an effort to be transferrable and usable across all SFAN Protocols where there is an existing annual Data Validations query and form workflow in place.  
 
-With the workflow being done in a python environment this is intended to be a more efficient approach for updating of exisitng data validation routines to include autoflagging, with out being done completely within Access has either hard coded queries or Visual Basic queries within Access.
+With the workflow being done in a python environment this is intended to be a more efficient approach for updating of exisitng data validation routines to include autoflagging, with out being done completely within Access has either hard coded queries or Visual Basic queries within Access.  
+
+Processing routine uses a combination of pyodbc and pywin32 libraries to connect to Access database.  PYODBC is quicker however not able to access as many functiosn and admin protected system tables in Access thus using both.  
+
+Note must be have Access open any where on your compuer when running the script otherwise the script will error out when tyring to open an Access application that is already open.
 
 As of August 5th, 2024 workflow has been defiend for SNPL GOGA annual data validation autoflagging routines.  
+
+
+## SFAN_AccessQCChecks.py
+Parent Annual Data Validation Quality Control Check Setup Script. From here you define the input parameters to run the 
+data validation routines.
 
 ## QC_Checks_SNPLPORE.py
 Methods/Functions to be used for Snowy Plover PORE Quality Control Data Validation workflow.

@@ -1,6 +1,6 @@
 """
 QC_Checks_SNPLPORE.py
-QC_Checks Methods/Functions to be used for Snowy Plover PORE Quality Control Validation
+Methods/Functions to be used for general (across multiple protocols) Quality Control Validation workflow.
 
 """
 #Import Required Libraries

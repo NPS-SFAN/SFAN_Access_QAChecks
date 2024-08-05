@@ -1,6 +1,7 @@
 """
 SFAN_AccessQCChecks.py
-Parent Quality Control Checks Setup Script.
+Parent Annual Data Validation Quality Control Check Setup Script. From here you define the input parameters to run the
+data validation routines.
 
 Output:
 

@@ -3,8 +3,7 @@ Repository with workflow to perform annual data validation routines within San F
 
 With the workflow being done in a python environment this is intended to be a more efficient approach for updating of exisitng data validation routines to include autoflagging, with out being done completely within Access has either hard coded queries or Visual Basic queries within Access.
 
-
-AS of August 5th, 2024 workflow has been defiend for SNPL GOGA annual data validation autoflagging routines.  
+As of August 5th, 2024 workflow has been defiend for SNPL GOGA annual data validation autoflagging routines.  
 
 ## QC_Checks_SNPLPORE.py
 Methods/Functions to be used for Snowy Plover PORE Quality Control Data Validation workflow.

@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 # Protocol Being Processes
 protocol = 'SNPLPORE'   #(SNPLPORE|Salmonids|...)
 # Access Backend Database for the protocol
-inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240726 - Copy.accdb'
+inDBBE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\Dbase_BE\PORE_SNPL_BE_20240806.accdb'
 # Access FrontEnd Database for the protocol
-inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240726 - Copy.accdb'
+inDBFE = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Database\PORE_SNPL_FrontEnd_20240806.accdb'
 # Year Being Processed
 inYear = 2023
 # NPS User Name of person running the QC script.  This will be populated in the 'QA_USer' field of the 'tbl_QA_Results
@@ -52,6 +52,9 @@ def main():
         # Set option in pandas to not allow chaining (views) of dataframes, instead force copy to be performed.
         pd.options.mode.copy_on_write = True
 
+        #Close any open Access Databases on the computer
+        outClose = dm.generalDMClass.closeAccessDB()
+
         ###############
         # Define the qcCheckInstance and dmInstance instances
         ################
@@ -64,7 +67,6 @@ def main():
 
         # Logfile will be saved in the workspace directory which is child of the fileDir - this is in addition to the
         # logger file 'ScriptProcessingError.log being created by the 'logger' configuration file via python.
-
         logFile = dm.generalDMClass.createLogFile(logFilePrefix=outName, workspaceParent=outDir)
 
         # Create the data management instance to  be used to define the logfile path and other general DM attributes

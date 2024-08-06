@@ -73,19 +73,19 @@ class qcProtcol_SNPLPORE:
         """
 
         try:
-            if queryName_LU == "qa_a102_Unverified_Events":
+            if queryName_LU == "qa_a102_Unverified_Events_X":
                 outFun = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance,
                                                                       dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_f112_Incomplete_Weather":
+            elif queryName_LU == "qa_f112_Incomplete_Weather_X":
                 outFun = qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryDecrip_LU, yearlyRecDF,
                                                                                        qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_f122_CompleteSurvey_IncompleteSNPL":
+            elif queryName_LU == "qa_f122_CompleteSurvey_IncompleteSNPL_X":
                 outFun = qcProtcol_SNPLPORE.qa_f122_CompleteSurvey_IncompleteSNPL(queryDecrip_LU,
                                                                                                   yearlyRecDF,
                                                                                                   qcCheckInstance,
@@ -93,7 +93,7 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_f132_MoreCheckedSNPL_ThanTotal":
+            elif queryName_LU == "qa_f132_MoreCheckedSNPL_ThanTotal_X":
                 outFun = qcProtcol_SNPLPORE.qa_f132_MoreCheckedSNPL_ThanTotal(queryDecrip_LU,
                                                                                   yearlyRecDF,
                                                                                   qcCheckInstance,
@@ -101,25 +101,25 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_f142_MoreBandedSNPL_ThanChecked":
+            elif queryName_LU == "qa_f142_MoreBandedSNPL_ThanChecked_X":
                 outFun = qcProtcol_SNPLPORE.qa_f142_MoreBandedSNPL_ThanChecked(queryDecrip_LU, yearlyRecDF,
                                                                               qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_f152_StopTime_MoreThanEvent":
+            elif queryName_LU == "qa_f152_StopTime_MoreThanEvent_X":
                 outFun = qcProtcol_SNPLPORE.qa_f152_StopTime_MoreThanEvent(queryDecrip_LU, yearlyRecDF,
                                                                            qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_h102_Missing_Observers":
+            elif queryName_LU == "qa_h102_Missing_Observers_X":
                 outFun = qcProtcol_SNPLPORE.qa_h102_Missing_Observers(queryDecrip_LU, yearlyRecDF,
                                                                       qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_j102_SNPL_ObservationTime_Error":
+            elif queryName_LU == "qa_j102_SNPL_ObservationTime_Error_X":
                 outFun = qcProtcol_SNPLPORE.qa_j102_SNPL_ObservationTime_Error(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
@@ -137,19 +137,19 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_j132_NestID_Year_Mismatch":
+            elif queryName_LU == "qa_j132_NestID_Year_Mismatch_X":
                 outFun = qcProtcol_SNPLPORE.qa_j132_NestID_Year_Mismatch(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_j142_Missing_Band_Totals":
+            elif queryName_LU == "qa_j142_Missing_Band_Totals_X":
                 outFun = qcProtcol_SNPLPORE.qa_j142_Missing_Band_Totals(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_j152_Missing_Band_Data":
+            elif queryName_LU == "qa_j152_Missing_Band_Data_X":
                 outFun = qcProtcol_SNPLPORE.qa_j152_Missing_Band_Data(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
@@ -167,7 +167,7 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
-            elif queryName_LU == "qa_j182_Predator_ActivityType":
+            elif queryName_LU == "qa_j182_Predator_ActivityType_X":
                 outFun = qcProtcol_SNPLPORE.qa_j182_Predator_ActivityType(queryDecrip_LU, yearlyRecDF,
                                                                             qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]

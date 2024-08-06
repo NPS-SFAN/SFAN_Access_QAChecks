@@ -167,3 +167,5 @@ cython_debug/
 .idea/vcs.xml
 .idea/SNPL_PORE_QAChecks.iml
 .idea/modules.xml
+.idea/SFAN_Access_QAChecks.iml
+.idea/workspace.xml

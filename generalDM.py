@@ -10,7 +10,7 @@ import pyodbc
 import pandas as pd
 import win32com.client
 import logging
-import log_config
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +200,43 @@ class generalDMClass:
         finally:
             cnxn.close()
             return queryDf
+
+
+    def closeAccessDB():
+        """
+        Closes any open Microsoft Access databases using pywin32 to hit the Access COM interface
+
+        :return: outClose - string denoting successfully closing of all access DBs.
+        """
+
+        try:
+            # Find and close all Microsoft Access processes
+            for proc in psutil.process_iter(['pid', 'name']):
+                if proc.info['name'] and 'MSACCESS.EXE' in proc.info['name']:
+                    try:
+                        # Attempt to terminate the process
+                        p = psutil.Process(proc.info['pid'])
+                        p.terminate()
+                        p.wait(timeout=5)
+                        print(f"Closed Microsoft Access process with PID {proc.info['pid']}")
+                    except psutil.NoSuchProcess:
+                        print(f"No such process with PID {proc.info['pid']}")
+                    except psutil.AccessDenied:
+                        print(f"Access denied to terminate process with PID {proc.info['pid']}")
+                    except psutil.TimeoutExpired:
+                        print(f"Timeout expired while terminating process with PID {proc.info['pid']}")
+
+            outClose = "Successfully Closed All Access DB's"
+            return outClose
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred generalDMClass.closeAccessDB: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.critical(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+
+
 
     def queryExistsDeleteODBC(queryName, inDBPath):
         """

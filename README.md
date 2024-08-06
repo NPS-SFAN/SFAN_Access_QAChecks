@@ -10,7 +10,7 @@ As of August 5th, 2024 workflow has been defined for **SNPL GOGA** annual data v
 
 ## SFAN_AccessQCChecks.py
 Parent Annual Data Validation Quality Control Check Setup Script. From here you define the input parameters to run the 
-data validation routines.
+data validation routines. This is the Master script from which processing starts.
 
 ## QC_Checks_SNPLPORE.py
 Methods/Functions to be used for Snowy Plover PORE Quality Control Data Validation workflow.

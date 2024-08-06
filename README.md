@@ -22,4 +22,7 @@ Methods/Functions to be used for general (across multiple protocols) Quality Con
 General Data Management workflow related methods.  Consider migrating this to a more general SFAN Data Management module.
 
 ## log_config.py
-Script log file configuration script used for use in the SFAN_Access_QAChecks repository
+Script log file configuration script used for use in the SFAN_Access_QAChecks repository.
+
+## SFAN_QC_environment.yml
+Conda/Python environemnt .yml file defining the packages used in the 'SFAN_QC' python environment used in the SFAN_Access_QAChecks workflow.

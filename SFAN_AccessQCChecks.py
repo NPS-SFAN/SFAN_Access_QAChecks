@@ -5,7 +5,7 @@ data validation routines.
 
 Output:
 
-Python Environment: SNPL_QC - Python 3.11,
+Python Environment: SFAN_QC - Python 3.11
 pywin32
 
 Date Developed - July 2024

@@ -1,6 +1,6 @@
 """
 QC_Checks_SNPLPORE.py
-Methods/Functions to be used for general (across multiple protocols) Quality Control Validation workflow.
+Methods/Functions to be used SNPL PORE Quality Control Validation workflow.
 
 """
 #Import Required Libraries
@@ -10,7 +10,6 @@ import traceback
 import QC_Checks as qc
 import generalDM as dm
 import logging
-import log_config
 
 logger = logging.getLogger(__name__)
 

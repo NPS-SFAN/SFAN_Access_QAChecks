@@ -18,7 +18,7 @@ class qcChecks:
 
     def __init__(self, protocol, inDBBE, inDBFE, yearLU, inUser):
         """
-        Define the instantiated loggerFile attributes
+        Define the instantiated QCChecks attributes
 
         :param protocol: Name of the Protocol being processes
         :param inDBBE: Protocol Backend Access database full path
@@ -53,8 +53,15 @@ class qcChecks:
         #Configure Logging:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # Create the data management instance to  be used to define the logfile path and other general DM attributes
-        qcProtocolInstance = SNPLP.qcProtcol_SNPLPORE()
+        # Create the protocol specific instance
+        if qcCheckInstance.protocol == 'SNPLPORE':
+            qcProtocolInstance = SNPLP.qcProtcol_SNPLPORE()
+        else:
+            logMsg = f"WARNING Protocol Specific Instance - {qcCheckInstance.protocol} - has not been defined."
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.critical(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            sys.exit()
 
         # Get the Subset of records for the year
         outMethod = SNPLP.qcProtcol_SNPLPORE.createYearlyRecs(qcCheckInstance)

@@ -914,8 +914,6 @@ class qcProtcol_SNPLPORE:
             # Check if query exists first - if yes delete
             dm.generalDMClass.queryExistsDelete(queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
 
-
-            # Need to Run Query to Create the tmp table - TO BE DEVELOPED KRS - 7/25/2024
             dm.generalDMClass.pushQueryODBC(inQuerySel=inQuery, queryName=queryName_LU, inDBPath=qcCheckInstance.inDBFE)
 
             #####################
@@ -1027,7 +1025,7 @@ class qcProtcol_SNPLPORE:
         Query routine for validation check - qa_j182_Predator_ActivityType. Returns records where the predator survey
         activity type entered is not one of  the expected values of A, F, S, and W. QC default value is PAVU. Query
         should be redundant because an Predator Activity Lookup table has been created and assigned to the predator
-        activtiy field in the database with referential integrity inplace.
+        activity field in the database with referential integrity inplace.
 
         :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
         :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
@@ -1036,7 +1034,12 @@ class qcProtcol_SNPLPORE:
 
         :return: inQuerySel: Final query to be pushed back to Access DB
                 flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
-                                applied.  Additionally defines the flag to be applied
+                applied.  Additionally defines the flag to be applied
+
+        Updates:
+        8/27/2024 - add logic to dynamically add all values in the tlu_Predator_Actions - Predator_Action_ID field
+        to the filter in the SQL statement.
+
         """
 
         try:
@@ -1047,7 +1050,28 @@ class qcProtcol_SNPLPORE:
             #####################
             queryName_LU = 'qa_j182_Predator_ActivityType'
 
-            inQuerySel = (f"SELECT tbl_Predator_Survey.Predator_Data_ID, tbl_Events.Event_ID, tbl_Locations.Loc_Name, "
+            # Import the tlu_Predator_Actions table
+            inQuery = f"SELECT * FROM tlu_Predator_Actions"
+            # Read in the tlu_Predator_Actions table
+            actionsDF = dm.generalDMClass.connect_to_AcessDB_DF(inQuery, qcCheckInstance.inDBBE)
+
+            # Get list of value in the 'Predator_Action_ID' field
+            realized_values = actionsDF['Predator_Action_ID'].dropna().unique().tolist()
+
+            # Iterate through the realized values and create the filter in the where clause to exclude.
+            filterString = f'Not in ('
+            recCount = 1
+            for value in realized_values:
+                if recCount == 1:
+                    filterString = f"{filterString}'{value}'"
+                else:
+                    filterString = f"{filterString},'{value}'"
+                recCount += 1
+            # Add closing parenthesis
+            filterString = f'{filterString})'
+
+            inQuerySel = (f"SELECT tbl_Predator_Survey."
+                          f"Predator_Data_ID, tbl_Events.Event_ID, tbl_Locations.Loc_Name, "
                           f"tbl_Events.Start_Date, "
                           f"tbl_Predator_Survey.QCFlag AS PredQCFlag, tbl_Predator_Survey.QCNotes AS PredQCNotes, "
                           f"tlu_Predator_Type.Description AS Predator, tbl_Predator_Survey.GroupSize, "
@@ -1057,8 +1081,7 @@ class qcProtcol_SNPLPORE:
                           f"(tbl_Events INNER JOIN tbl_Predator_Survey ON tbl_Events.Event_ID = "
                           f"tbl_Predator_Survey.Event_ID) ON tbl_Locations.Location_ID = tbl_Events.Location_ID) ON "
                           f"tlu_Predator_Type.Predator_Type_ID = tbl_Predator_Survey.Predator_Type_ID WHERE "
-                          f"(((tbl_Predator_Survey.ACT)<>'A' And (tbl_Predator_Survey.ACT)<>'F' And "
-                          f"(tbl_Predator_Survey.ACT)<>'S' And (tbl_Predator_Survey.ACT)<>'W')) ORDER BY "
+                          f" tbl_Predator_Survey.ACT {filterString} ORDER BY "
                           f"tbl_Events.Start_Date DESC;")
 
             # Define the flag fields in the FlagTable table, these are the fields to which the flag 'DFO' will be

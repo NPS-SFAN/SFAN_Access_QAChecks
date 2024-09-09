@@ -128,4 +128,3 @@ dependencies:
       - urllib3==2.2.1
       - xlsxwriter==3.2.0
 prefix: C:\Users\KSherrill\AppData\Local\miniforge3\envs\SFAN_QC
-[0m[0m

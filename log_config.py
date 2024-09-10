@@ -9,7 +9,7 @@ def setup_logging():
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s',
                         filename='ScriptProcessingLog.log',  # Log to a file
-                        filemode='a')        # Append to the log file
+                        filemode='w')        # Write to the file and truncate, option 'a' would append
 
 # Call the setup function to configure logging
 setup_logging()

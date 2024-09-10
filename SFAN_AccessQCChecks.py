@@ -39,12 +39,14 @@ inYear = 2023
 # NPS User Name of person running the QC script.  This will be populated in the 'QA_USer' field of the 'tbl_QA_Results
 inUser = 'ksherrill'
 
-#dateNow = datetime.now().strftime('%Y%m%d')
 # Output Name, OutDir, Workspace and Logfile Name
-outName = f'{protocol}_{inYear}'  # Output name for excel file and logile
 outDir = r'C:\Users\KSherrill\OneDrive - DOI\SFAN\VitalSigns\SnowyPlovers_PORE\SNPLOVER\SNPL_IM\Data\Deliverable\2023'  # Directory Output Location
 
+# Output name for logfile
+outName = f'{protocol}_{inYear}'
+
 def main():
+
     logger = logging.getLogger(__name__)
 
     try:

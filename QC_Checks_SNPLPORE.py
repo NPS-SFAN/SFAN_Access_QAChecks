@@ -5,7 +5,7 @@ Methods/Functions to be used SNPL PORE Quality Control Validation workflow.
 """
 #Import Required Libraries
 import pandas as pd
-import glob, os, sys
+import sys
 import traceback
 import QC_Checks as qc
 import generalDM as dm

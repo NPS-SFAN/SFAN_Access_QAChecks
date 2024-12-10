@@ -123,31 +123,36 @@ class qcProtcol_SNPLPORE:
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
-
-            elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Adults":
-                outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Adults(queryDecrip_LU, yearlyRecDF,
-                                                                               qcCheckInstance, dmInstance)
-                inQuerySel = outFun[0]
-                flagFieldsDic = outFun[1]
-
-            elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Fledglings":
-                outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Fledglings(queryDecrip_LU, yearlyRecDF,
-                                                                               qcCheckInstance, dmInstance)
-                inQuerySel = outFun[0]
-                flagFieldsDic = outFun[1]
-
-            elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Hatchlings":
-                outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Fledglings(queryDecrip_LU, yearlyRecDF,
-                                                                                       qcCheckInstance, dmInstance)
-                inQuerySel = outFun[0]
-                flagFieldsDic = outFun[1]
-
-            elif queryName_LU == "qa_j122_Mismatched_Banded_Numbers":
-                outFun = qcProtcol_SNPLPORE.qa_j122_Mismatched_Banded_Numbers(queryDecrip_LU, yearlyRecDF,
-                                                                               qcCheckInstance, dmInstance)
-                inQuerySel = outFun[0]
-                flagFieldsDic = outFun[1]
-
+            '''
+            ##### MisMatched_SNPL_{....} queries evaluating SNPL Observation numbers against tbl Event Details Numbers
+            ##### have been set to Legacy because the tbl Event Details SNPL attributes (i.e. Count Adults, Hatchlings
+            ##### , Fledglings, Bands) should be coming from th SNPLO Observatiosn.  Additional with Survey 123 data
+            ##### data collection these tbl Event Details SNPL attributes are not being
+            ###### collected - 12/101/2024 - Kirk Sherrill.  
+            # elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Adults":
+            #     outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Adults(queryDecrip_LU, yearlyRecDF,
+            #                                                                    qcCheckInstance, dmInstance)
+            #     inQuerySel = outFun[0]
+            #     flagFieldsDic = outFun[1]
+            # 
+            # elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Fledglings":
+            #     outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Fledglings(queryDecrip_LU, yearlyRecDF,
+            #                                                                    qcCheckInstance, dmInstance)
+            #     inQuerySel = outFun[0]
+            #     flagFieldsDic = outFun[1]
+            # 
+            # elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Hatchlings":
+            #     outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Fledglings(queryDecrip_LU, yearlyRecDF,
+            #                                                                            qcCheckInstance, dmInstance)
+            #     inQuerySel = outFun[0]
+            #     flagFieldsDic = outFun[1]
+            # 
+            # elif queryName_LU == "qa_j122_Mismatched_Banded_Numbers":
+            #     outFun = qcProtcol_SNPLPORE.qa_j122_Mismatched_Banded_Numbers(queryDecrip_LU, yearlyRecDF,
+            #                                                                    qcCheckInstance, dmInstance)
+            #     inQuerySel = outFun[0]
+            #     flagFieldsDic = outFun[1]
+            '''
             elif queryName_LU == "qa_j132_NestID_Year_Mismatch_X":
                 outFun = qcProtcol_SNPLPORE.qa_j132_NestID_Year_Mismatch(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)
@@ -585,6 +590,7 @@ class qcProtcol_SNPLPORE:
 
     def qa_j112_Mismatched_SNPL_Numbers_Adults(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
+        Not Being Used / Legacy Routines as of 12/10/2024 - KRS
         Query routine for validation check - qa_j112_Mismatched_SNPL_Numbers_Adults. Returns records where the entered
         summarized number of adults SNPL in tbl SNPL Observations does not match the observed sum of adult in
         tbl_Event_Details. QC default value is NSPLE.
@@ -654,6 +660,7 @@ class qcProtcol_SNPLPORE:
 
     def qa_j112_Mismatched_SNPL_Numbers_Fledglings(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
+        Not Being Used / Legacy Routines as of 12/10/2024 - KRS
         Query routine for validation check - qa_j112_Mismatched_SNPL_Numbers_Fledglings. Returns records where the entered
         summarized number of Fledgling SNPL in tbl SNPL Observations does not match the observed sum of Fledgling in
         tbl_Event_Details. QC default value is NSPLE.
@@ -723,6 +730,7 @@ class qcProtcol_SNPLPORE:
 
     def qa_j112_Mismatched_SNPL_Numbers_Hatchlings(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
+        Not Being Used / Legacy Routines as of 12/10/2024 - KRS
         Query routine for validation check - qa_j112_Mismatched_SNPL_Numbers_Hatclings. Returns records where the entered
         summarized number of Hatchling SNPL in tbl SNPL Observations does not match the observed sum of Hatchling in
         tbl_Event_Details. QC default value is NSPLE.
@@ -792,6 +800,7 @@ class qcProtcol_SNPLPORE:
 
     def qa_j122_Mismatched_Banded_Numbers(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
+        Not Being Used / Legacy Routines as of 12/10/2024 - KRS
         Query routine for validation check - qa_j122_Mismatched_Banded_Numbers. Returns records where the number of
         Banded SNPL recorded entered into the SNPL Banded summary results field is not the same as the tally of Banded
         observation records for the survey. QC default value is NSBPLE.

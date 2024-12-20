@@ -123,12 +123,12 @@ class qcProtcol_SNPLPORE:
                                                                                qcCheckInstance, dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
-            '''
+
             ##### MisMatched_SNPL_{....} queries evaluating SNPL Observation numbers against tbl Event Details Numbers
             ##### have been set to Legacy because the tbl Event Details SNPL attributes (i.e. Count Adults, Hatchlings
             ##### , Fledglings, Bands) should be coming from th SNPLO Observatiosn.  Additional with Survey 123 data
             ##### data collection these tbl Event Details SNPL attributes are not being
-            ###### collected - 12/101/2024 - Kirk Sherrill.  
+            ###### collected - 12/10/2024 - Kirk Sherrill.
             # elif queryName_LU == "qa_j112_Mismatched_SNPL_Numbers_Adults":
             #     outFun = qcProtcol_SNPLPORE.qa_j112_Mismatched_SNPL_Numbers_Adults(queryDecrip_LU, yearlyRecDF,
             #                                                                    qcCheckInstance, dmInstance)
@@ -152,7 +152,7 @@ class qcProtcol_SNPLPORE:
             #                                                                    qcCheckInstance, dmInstance)
             #     inQuerySel = outFun[0]
             #     flagFieldsDic = outFun[1]
-            '''
+
             elif queryName_LU == "qa_j132_NestID_Year_Mismatch_X":
                 outFun = qcProtcol_SNPLPORE.qa_j132_NestID_Year_Mismatch(queryDecrip_LU, yearlyRecDF,
                                                                                qcCheckInstance, dmInstance)

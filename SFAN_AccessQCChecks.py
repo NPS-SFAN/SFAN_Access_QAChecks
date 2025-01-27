@@ -17,7 +17,6 @@ import pandas as pd
 import pyodbc
 import sys
 import os
-import session_info
 import traceback
 from datetime import datetime
 import QC_Checks as qc
@@ -50,7 +49,7 @@ def main():
     logger = logging.getLogger(__name__)
 
     try:
-        session_info.show()
+
         # Set option in pandas to not allow chaining (views) of dataframes, instead force copy to be performed.
         pd.options.mode.copy_on_write = True
 

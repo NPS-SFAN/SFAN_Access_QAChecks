@@ -72,11 +72,19 @@ class qcProtcol_SNPLPORE:
         """
 
         try:
+
             if queryName_LU == "qa_a102_Unverified_Events_X":
                 outFun = qcProtcol_SNPLPORE.qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance,
                                                                       dmInstance)
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
+
+            elif queryName_LU == "qa_j113_SNPL_Observations_wNestID_X":
+                outFun = qcProtcol_SNPLPORE.qa_j113_SNPL_Observations_wNestID(queryDecrip_LU, yearlyRecDF,
+                                                                            qcCheckInstance, dmInstance)
+                inQuerySel = outFun[0]
+                flagFieldsDic = outFun[1]
+
 
             elif queryName_LU == "qa_f112_Incomplete_Weather_X":
                 outFun = qcProtcol_SNPLPORE.qa_f112_Incomplete_Weather(queryDecrip_LU, yearlyRecDF,
@@ -189,6 +197,7 @@ class qcProtcol_SNPLPORE:
                 inQuerySel = outFun[0]
                 flagFieldsDic = outFun[1]
 
+
             else:
                 logMsg = f'Query - {queryName_LU} - is not defined - existing script'
                 dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
@@ -224,6 +233,7 @@ class qcProtcol_SNPLPORE:
             logging.error(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
             exit()
+
 
     def qa_a102_Unverified_Events(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
@@ -266,6 +276,63 @@ class qcProtcol_SNPLPORE:
             logging.error(logMsg, exc_info=True)
             traceback.print_exc(file=sys.stdout)
             exit()
+
+    def qa_j113_SNPL_Observations_wNestID(queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
+        """
+        Query routine for validation check - qa_a102_Unverified_Events. Shows records that have not been marked as
+        verified.  No QC Flag applied, data processing level should be Raw
+
+        :param queryName_LU: Name of query routine being processes this is query name in the 'Query_Name' field in
+         table 'tbl_QCQueries'
+        :param queryDecrip_LU: Query description pulled from the 'tbl_QCQueries' table
+        :param yearlyRecDF:  Dataframe with the subset of yearly records by Event to be processed
+        :param qcCheckInstance: QC Check Instance
+        :param dmInstance: data management instance which will have the logfile name
+
+        :return: inQuerySel: Final query to be pushed back to Access DB
+                flagFieldsDic: Dictionary defining the Flag fields in 'tbl_Event_Details' to which flags will be
+                                applied.  Additionally defines the flag to be applied
+        """
+
+        try:
+            #Single Query Check
+            queryName_LU = 'qa_j113_SNPL_Observations_wNestID_X'
+
+            inQuerySel = ("SELECT tbl_Locations.Loc_Name, tbl_Locations.Loc_Code, tbl_Events.Start_Date,"
+                          " tbl_SNPL_Observations.*,'frm_Data_Entry' AS varObject, 'tbl_Events' AS RecTable,"
+                          " 'Event_ID' AS RecField, tbl_Events.Event_ID AS RecValue FROM"
+                          "(tbl_Locations RIGHT JOIN (tbl_Events INNER JOIN "
+                          "tbl_SNPL_Observations ON tbl_Events.Event_ID = tbl_SNPL_Observations.Event_ID) ON "
+                          "tbl_Locations.Location_ID = tbl_Events.Location_ID) INNER JOIN qsel_QA_Control ON "
+                          "tbl_Events.Event_ID = qsel_QA_Control.Event_ID WHERE ((NOT (tbl_SNPL_Observations.Nest_ID) "
+                          "IS NULL)) ORDER BY tbl_SNPL_Observations.Nest_ID, tbl_Events.Start_Date DESC;")
+
+            flagFieldsDic = {'ApplyFlag': ['No']}
+
+            return inQuerySel, flagFieldsDic
+
+        except Exception as e:
+
+            logMsg = (f'ERROR - An error occurred in QC_Checks_SNPLPORE - for query {queryName_LU}: {e}')
+            dm.generalDMClass.messageLogFile(dmInstance, logMsg=logMsg)
+            logging.error(logMsg, exc_info=True)
+            traceback.print_exc(file=sys.stdout)
+            exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def qa_f112_Incomplete_Weather (queryDecrip_LU, yearlyRecDF, qcCheckInstance, dmInstance):
         """
